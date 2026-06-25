@@ -1191,12 +1191,50 @@
   };
 
   // ── SIGN OUT ──────────────────────────────────────────────────────────────
-  function renderDashboardGantt(projects) {
-    const STAGES = ['Not Started','Structure','Polish','Upholstery','Packing','Delivered','Completed'];
-    const COLORS = {'Not Started':'#e5e7eb','Structure':'#d97706','Polish':'#3b82f6','Upholstery':'#0ea5e9','Packing':'#10b981','Delivered':'#16a34a','Completed':'#6b7280'};
-    const PCTS  = {'Not Started':0,'Structure':15,'Polish':35,'Upholstery':55,'Packing':75,'Delivered':90,'Completed':100};
+  function calcProjectProgress(items) {
+    // Each stage = 25% weightage
+    // carpentry=25%, polish=25%, upholstery=25%, packing=25%
+    const STAGES = ['carpentry','polish','upholstery','packing'];
+    const WEIGHT = 25; // each stage worth 25%
 
-    const ongoing = projects.filter(p => !['Delivered','Completed'].includes(p.status));
+    if (!items.length) return { pct: 0, breakdown: [] };
+
+    let totalPct = 0;
+    const breakdown = [];
+
+    STAGES.forEach(function(stage) {
+      const validItems = items.filter(function(i) { return i[stage+'Status'] !== 'na'; });
+      if (validItems.length === 0) {
+        // All items N/A for this stage — skip, redistribute weight
+        breakdown.push({ stage: stage, done: 0, total: 0, pct: 0, na: true });
+        return;
+      }
+      const doneItems = validItems.filter(function(i) { return i[stage+'Status'] === 'done'; });
+      const stagePct = (doneItems.length / validItems.length) * WEIGHT;
+      totalPct += stagePct;
+      breakdown.push({ stage: stage, done: doneItems.length, total: validItems.length, pct: stagePct, na: false });
+    });
+
+    // If some stages were N/A, redistribute their weight equally among valid stages
+    const naCount = breakdown.filter(function(b) { return b.na; }).length;
+    if (naCount > 0) {
+      const validStages = breakdown.filter(function(b) { return !b.na; });
+      const extraWeight = (naCount * WEIGHT) / validStages.length;
+      validStages.forEach(function(b) {
+        const stagePct = (b.done / b.total) * (WEIGHT + extraWeight);
+        totalPct += stagePct - (b.done / b.total) * WEIGHT; // adjust
+      });
+    }
+
+    return { pct: Math.min(100, Math.round(totalPct)), breakdown: breakdown };
+  }
+
+  function renderDashboardGantt(projects) {
+    const STAGE_COLORS = {carpentry:'#d97706', polish:'#3b82f6', upholstery:'#0ea5e9', packing:'#10b981'};
+    const STAGE_LABELS = {carpentry:'Structure', polish:'Polish', upholstery:'Upholstery', packing:'Packing'};
+    const STATUS_COLORS = {'Not Started':'#9ca3af','Structure':'#d97706','Polish':'#3b82f6','Upholstery':'#0ea5e9','Packing':'#10b981','Delivered':'#16a34a','Completed':'#6b7280'};
+
+    const ongoing = projects.filter(function(p) { return !['Delivered','Completed'].includes(p.status); });
     const el = document.getElementById('dashboard-gantt');
     if (!el) return;
     if (!ongoing.length) {
@@ -1204,30 +1242,53 @@
       return;
     }
 
-    el.innerHTML = ongoing.map(p => {
-      const pct = PCTS[p.status] || 0;
-      const color = COLORS[p.status] || '#e5e7eb';
-      const daysLeft = p.handoverDate ? Math.round((new Date(p.handoverDate) - new Date()) / 86400000) : null;
-      const urgency = daysLeft !== null ? (daysLeft < 0 ? 'color:#c0392b;font-weight:500' : daysLeft <= 7 ? 'color:#d97706;font-weight:500' : 'color:var(--ink-3)') : '';
-      return '<div style="padding:14px 20px;border-bottom:1px solid var(--surface-2)">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-          '<div>' +
-            '<span style="font-size:13px;font-weight:500">' + esc(p.projectName||'—') + '</span>' +
-            '<span style="font-size:11px;color:var(--ink-3);margin-left:8px">' + esc(p.assignee||'') + '</span>' +
+    Promise.all(ongoing.map(function(p) {
+      return getDocs(collection(db, 'projects', p.id, 'items'))
+        .then(function(snap) { return { project: p, items: snap.docs.map(function(d) { return d.data(); }) }; })
+        .catch(function() { return { project: p, items: [] }; });
+    })).then(function(results) {
+      el.innerHTML = results.map(function(r) {
+        const p = r.project;
+        const items = r.items;
+        const prog = calcProjectProgress(items);
+        const pct = prog.pct;
+        const breakdown = prog.breakdown;
+
+        const barColor = pct === 100 ? '#16a34a' : pct >= 75 ? '#10b981' : pct >= 50 ? '#3b82f6' : pct >= 25 ? '#d97706' : '#9ca3af';
+        const statusColor = STATUS_COLORS[p.status] || '#9ca3af';
+        const daysLeft = p.handoverDate ? Math.round((new Date(p.handoverDate) - new Date()) / 86400000) : null;
+        const urgency = daysLeft !== null ? (daysLeft < 0 ? 'color:#c0392b;font-weight:600' : daysLeft <= 7 ? 'color:#d97706;font-weight:500' : 'color:var(--ink-3)') : '';
+
+        // Build segmented breakdown pills
+        const pills = breakdown.filter(function(b) { return !b.na; }).map(function(b) {
+          const stagePct = Math.round((b.done / b.total) * 100);
+          const sc = STAGE_COLORS[b.stage];
+          return '<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 7px;border-radius:10px;background:' + sc + '15;color:' + sc + ';border:1px solid ' + sc + '30">' +
+            STAGE_LABELS[b.stage] + ' ' + stagePct + '%' +
+          '</span>';
+        }).join('');
+
+        return '<div style="padding:14px 20px;border-bottom:1px solid var(--surface-2)">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+            '<div>' +
+              '<span style="font-size:13px;font-weight:500">' + esc(p.projectName||'—') + '</span>' +
+              '<span style="font-size:11px;color:var(--ink-3);margin-left:8px">' + esc(p.assignee||'') + '</span>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:10px">' +
+              '<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;background:' + statusColor + '20;color:' + statusColor + '">' + (p.status||'Not Started') + '</span>' +
+              '<span style="font-size:16px;font-weight:700;color:' + barColor + '">' + pct + '%</span>' +
+              (daysLeft !== null ? '<span style="font-size:11px;' + urgency + '">' + (daysLeft < 0 ? Math.abs(daysLeft) + 'd overdue' : daysLeft === 0 ? 'Due today' : daysLeft + 'd left') + '</span>' : '') +
+            '</div>' +
           '</div>' +
-          '<div style="display:flex;align-items:center;gap:12px">' +
-            '<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;background:' + color + '20;color:' + color + '">' + (p.status||'Not Started') + '</span>' +
-            (daysLeft !== null ? '<span style="font-size:11px;' + urgency + '">' + (daysLeft < 0 ? Math.abs(daysLeft) + 'd overdue' : daysLeft === 0 ? 'Due today' : daysLeft + 'd left') + '</span>' : '') +
+          '<div style="height:12px;background:var(--surface-2);border-radius:6px;overflow:hidden;margin-bottom:8px">' +
+            '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,' + barColor + ',' + barColor + 'cc);border-radius:6px;transition:width .6s ease"></div>' +
           '</div>' +
-        '</div>' +
-        '<div style="height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden">' +
-          '<div style="height:100%;width:' + pct + '%;background:' + color + ';border-radius:4px;transition:width .4s"></div>' +
-        '</div>' +
-        '<div style="display:flex;justify-content:space-between;margin-top:5px">' +
-          STAGES.map(s => '<span style="font-size:9px;color:' + (p.status === s ? color : 'var(--ink-3)') + ';font-weight:' + (p.status === s ? '600' : '400') + '">' + s + '</span>').join('') +
-        '</div>' +
-      '</div>';
-    }).join('');
+          (items.length > 0 ?
+            '<div style="display:flex;gap:6px;flex-wrap:wrap">' + pills + '</div>'
+          : '<div style="font-size:10px;color:var(--ink-3)">No items pushed yet</div>') +
+        '</div>';
+      }).join('');
+    });
   }
 
   function esc(s) { return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
