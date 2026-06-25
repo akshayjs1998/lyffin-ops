@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a1a18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lyffin Ops">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lyffin Ops — QC & Complaints</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:       #1a1a18;
+    --ink-2:     #4a4a46;
+    --ink-3:     #9a9890;
+    --surface:   #f7f6f2;
+    --surface-2: #eeecea;
+    --border:    #dddbd5;
+    --gold:      #b89a6a;
+    --gold-lt:   rgba(184,154,106,0.12);
+    --white:     #ffffff;
+    --radius:    6px;
+    --sidebar-w: 220px;
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-disp: 'Playfair Display', Georgia, serif;
+    --danger:    #c0392b;
+    --danger-lt: #fdf2f2;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:wght@500;600&display=swap');
+
+  body { font-family: var(--font-sans); background: var(--surface); color: var(--ink); min-height: 100vh; display: flex; }
+
+  /* SIDEBAR */
+  .sidebar { width: var(--sidebar-w); min-height: 100vh; background: var(--ink); display: flex; flex-direction: column; flex-shrink: 0; position: fixed; left: 0; top: 0; bottom: 0; }
+  .sidebar-logo { padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .sidebar-logo-name { font-family: var(--font-disp); font-size: 18px; font-weight: 600; color: var(--white); }
+  .sidebar-logo-sub { font-size: 10px; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+  .sidebar-nav { flex: 1; padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .nav-section { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.25); letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 10px 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 5px; font-size: 13.5px; color: rgba(255,255,255,0.55); cursor: pointer; text-decoration: none; transition: background 0.12s, color 0.12s; }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+  .nav-item.active { background: rgba(184,154,106,0.18); color: var(--gold); }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .sidebar-user { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 10px; }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(184,154,106,0.25); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--gold); flex-shrink: 0; }
+  .user-name { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.8); }
+  .user-role { font-size: 11px; color: rgba(255,255,255,0.3); text-transform: capitalize; }
+  .btn-signout { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.25); padding: 4px; border-radius: 4px; display: flex; align-items: center; transition: color 0.12s; margin-left: auto; }
+  .btn-signout:hover { color: rgba(255,255,255,0.6); }
+  .btn-signout svg { width: 15px; height: 15px; }
+
+  /* MAIN */
+  .main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+  .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .topbar-title { font-family: var(--font-disp); font-size: 18px; font-weight: 500; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn { height: 36px; padding: 0 16px; border-radius: var(--radius); font-size: 13px; font-weight: 500; font-family: var(--font-sans); cursor: pointer; border: none; transition: all 0.12s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--ink); color: var(--white); }
+  .btn-primary:hover { background: #2e2e2a; }
+  .btn-ghost { background: transparent; color: var(--ink-2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface-2); }
+  .btn svg { width: 14px; height: 14px; }
+
+  .content { padding: 28px 32px; flex: 1; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  .tab { padding: 10px 20px; font-size: 13.5px; font-weight: 500; color: var(--ink-3); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--ink); border-bottom-color: var(--gold); }
+
+  /* STATS */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; }
+  .stat-label { font-size: 11px; font-weight: 500; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .stat-value { font-size: 26px; font-weight: 500; color: var(--ink); line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+
+  /* TABLE */
+  .table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead tr { background: var(--surface); border-bottom: 1px solid var(--border); }
+  th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 500; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--surface-2); transition: background 0.1s; cursor: pointer; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface); }
+  td { padding: 12px 16px; vertical-align: middle; }
+
+  /* STATUS BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+  .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .badge-pending { background: #fef3cd; color: #92400e; }
+  .badge-pending::before { background: #d97706; }
+  .badge-in-progress { background: #dbeafe; color: #1e40af; }
+  .badge-in-progress::before { background: #3b82f6; }
+  .badge-resolved { background: #dcfce7; color: #14532d; }
+  .badge-resolved::before { background: #16a34a; }
+  .badge-pickup { background: #e0f2fe; color: #075985; }
+  .badge-pickup::before { background: #0ea5e9; }
+
+  /* SEVERITY */
+  .sev-high { color: var(--danger); font-weight: 500; }
+  .sev-medium { color: #d97706; font-weight: 500; }
+  .sev-low { color: var(--ink-3); }
+
+  /* PRIORITY DOT */
+  .priority-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .p-high { background: var(--danger); }
+  .p-medium { background: #f59e0b; }
+  .p-low { background: #9ca3af; }
+
+  /* FILTERS */
+  .filters { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+  .search-box { display: flex; align-items: center; gap: 8px; background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 0 12px; height: 36px; flex: 1; max-width: 280px; }
+  .search-box svg { width: 14px; height: 14px; color: var(--ink-3); flex-shrink: 0; }
+  .search-box input { border: none; outline: none; font-size: 13px; font-family: var(--font-sans); color: var(--ink); background: transparent; width: 100%; }
+  .search-box input::placeholder { color: var(--ink-3); }
+  .filter-select { height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: var(--font-sans); color: var(--ink-2); background: var(--white); cursor: pointer; outline: none; }
+
+  /* EMPTY */
+  .empty-state { text-align: center; padding: 56px 32px; color: var(--ink-3); font-size: 14px; }
+
+  /* MODAL */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; align-items: center; justify-content: center; padding: 24px; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--white); border-radius: 10px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal-header { padding: 22px 26px 0; display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-family: var(--font-disp); font-size: 20px; font-weight: 500; }
+  .modal-close { background: none; border: none; cursor: pointer; color: var(--ink-3); padding: 4px; border-radius: 4px; display: flex; align-items: center; }
+  .modal-close:hover { color: var(--ink); }
+  .modal-close svg { width: 18px; height: 18px; }
+  .modal-body { padding: 18px 26px 26px; display: flex; flex-direction: column; gap: 14px; }
+  .modal-footer { padding: 0 26px 22px; display: flex; justify-content: flex-end; gap: 10px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-field label { display: block; font-size: 11px; font-weight: 500; color: var(--ink-2); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 5px; }
+  .form-field input, .form-field select, .form-field textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13.5px; font-family: var(--font-sans); color: var(--ink); background: var(--white); outline: none; transition: border-color 0.12s; }
+  .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-lt); }
+  .form-field textarea { resize: vertical; min-height: 80px; }
+
+  /* DETAIL PANEL */
+  .detail-panel { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 20px; }
+  .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .detail-item label { font-size: 11px; font-weight: 500; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
+  .detail-item span { font-size: 14px; color: var(--ink); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--white); padding: 10px 16px; border-radius: var(--radius); font-size: 13px; z-index: 200; transform: translateY(80px); opacity: 0; transition: all 0.25s ease; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* LOADING */
+  .page-loading { position: fixed; inset: 0; background: var(--surface); display: flex; align-items: center; justify-content: center; z-index: 999; }
+  .spin-lg { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+  
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .form-row { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+/* Mobile bottom nav */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--ink);
+  height: 60px;
+  z-index: 50;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.bottom-nav-inner {
+  display: flex;
+  height: 100%;
+}
+.bn-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 10px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  transition: color .15s;
+}
+.bn-item.active { color: var(--gold); }
+.bn-item svg { width: 20px; height: 20px; }
+
+}
+
+/* ── MOBILE APP STYLES ── */
+@media (max-width: 700px) {
+  body { font-size: 14px; }
+  .topbar { padding: 0 16px; height: 52px; }
+  .topbar-title { font-size: 16px; }
+  .content { padding: 16px 12px 80px; }
+  .stats-row { grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { padding: 14px 14px; }
+  .stat-value { font-size: 22px; }
+  .stat-label { font-size: 10px; }
+  .table-wrap { border-radius: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 500px; }
+  .filters { gap: 8px; }
+  .search-box { max-width: 100%; }
+  .filter-select { font-size: 12px; height: 34px; }
+  .btn { height: 38px; font-size: 12px; padding: 0 12px; }
+  .project-card { border-radius: 8px; }
+  .project-name { font-size: 14px; }
+  .project-meta { font-size: 11px; }
+  .progress-bar-bg { width: 80px; }
+  .section-card { border-radius: 8px; }
+  /* Production mobile */
+  .items-table th, .items-table td { padding: 10px 12px; }
+  .stages { gap: 4px; }
+  .sp { padding: 5px 10px; font-size: 11px; }
+  /* Make tap targets bigger */
+  .sp, .btn, .nav-item, .tab { min-height: 40px; }
+  /* Remove hover effects on touch */
+  .sp:hover { transform: none; }
+}
+
+@media (max-width: 700px) {
+  table { min-width: unset; width: 100%; }
+  .table-wrap { overflow-x: hidden; }
+  thead { display: none; }
+  tbody tr { display: flex; flex-direction: column; padding: 12px 16px; border-bottom: 1px solid var(--surface-2); gap: 4px; cursor: pointer; }
+  td { padding: 1px 0; border: none; font-size: 13px; }
+  .topbar-actions { gap: 6px; }
+  .topbar-actions .btn { padding: 0 10px; font-size: 11px; height: 34px; }
+  .stats-row { grid-template-columns: repeat(2,1fr); }
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--ink);
+  height: 64px;
+  z-index: 50;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav-inner { display: flex; height: 100%; align-items: stretch; width: 100%; justify-content: space-around; }
+.bn-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px; text-decoration: none;
+  color: rgba(255,255,255,0.35); font-size: 9px; font-weight: 500;
+  font-family: var(--font-sans); letter-spacing: 0.03em; text-transform: uppercase;
+  cursor: pointer; border: none; background: none; transition: color .15s; padding: 0;
+}
+.bn-item.active { color: var(--gold); }
+.bn-item svg { width: 22px; height: 22px; }
+@media (max-width: 700px) {
+  .sidebar { display: none !important; }
+  .main { margin-left: 0 !important; }
+  .content { padding-bottom: 80px !important; }
+  .bottom-nav { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-loading" id="page-loading"><div class="spin-lg"></div></div>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-name">lyffin</div>
+    <div class="sidebar-logo-sub">Ops Platform</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Workspace</div>
+    <a class="nav-item" href="dashboard.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Projects
+    </a>
+    <a class="nav-item" href="production.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/><path d="M2 12h12"/></svg>
+      Production
+    </a>
+    <a class="nav-item active" href="qc.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4L2 5h4z"/></svg>
+      QC & Complaints
+    </a>
+    <div class="nav-section" id="nav-admin-section" style="display:none">Admin</div>
+    <a class="nav-item" href="admin.html" id="nav-admin" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Admin dashboard
+    </a>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="user-avatar">?</div>
+    <div>
+      <div class="user-name" id="user-name">Loading…</div>
+      <div class="user-role" id="user-role">—</div>
+    </div>
+    <button class="btn-signout" onclick="signOut()" title="Sign out">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M11 11l4-4-4-4"/><path d="M15 8H6"/><path d="M6 14H2a1 1 0 01-1-1V3a1 1 0 011-1h4"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">QC & Complaints</div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="openNewQC()" id="btn-new-qc">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+        Log QC defect
+      </button>
+      <button class="btn btn-primary" onclick="openNewComplaint()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+        New complaint
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Open complaints</div>
+        <div class="stat-value" id="stat-open">—</div>
+        <div class="stat-sub">pending resolution</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">In progress</div>
+        <div class="stat-value" id="stat-progress">—</div>
+        <div class="stat-sub">being resolved</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Resolved</div>
+        <div class="stat-value" id="stat-resolved">—</div>
+        <div class="stat-sub">this year</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">QC defects</div>
+        <div class="stat-value" id="stat-qc">—</div>
+        <div class="stat-sub">in factory</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('complaints', this)">Complaints</div>
+      <div class="tab" onclick="switchTab('qc', this)">QC Defects</div>
+    </div>
+
+    <!-- Complaints tab -->
+    <div id="tab-complaints">
+      <div class="filters">
+        <div class="search-box">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="6.5" cy="6.5" r="4.5"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
+          <input type="text" placeholder="Search project or product…" oninput="filterComplaints(this.value)">
+        </div>
+        <select class="filter-select" onchange="filterComplaintsByStatus(this.value)">
+          <option value="">All statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Pickup Scheduled">Pickup Scheduled</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Product</th>
+              <th>Issue</th>
+              <th>Root cause</th>
+              <th>Assignee</th>
+              <th>Status</th>
+              <th>Logged</th>
+            </tr>
+          </thead>
+          <tbody id="complaints-tbody">
+            <tr><td colspan="7"><div class="empty-state">Loading complaints…</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- QC Defects tab -->
+    <div id="tab-qc" style="display:none">
+      <div class="filters">
+        <div class="search-box">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="6.5" cy="6.5" r="4.5"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
+          <input type="text" placeholder="Search project or product…" oninput="filterQC(this.value)">
+        </div>
+        <select class="filter-select" onchange="filterQCByStage(this.value)">
+          <option value="">All stages</option>
+          <option value="Structure">Structure</option>
+          <option value="Polish">Polish</option>
+          <option value="Upholstery">Upholstery</option>
+          <option value="Packing">Packing</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Product</th>
+              <th>Stage</th>
+              <th>Issue</th>
+              <th>Severity</th>
+              <th>Inspector</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="qc-tbody">
+            <tr><td colspan="7"><div class="empty-state">Loading QC defects…</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Complaint Modal -->
+<div class="modal-backdrop" id="modal-complaint">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New complaint</div>
+      <button class="modal-close" onclick="closeModal('modal-complaint')">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="16" y2="16"/><line x1="16" y1="2" x2="2" y2="16"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Project</label>
+          <select id="c-project">
+            <option value="">Select project…</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Complaint date</label>
+          <input type="date" id="c-date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Product name</label>
+          <input type="text" id="c-product" placeholder="e.g. Sofa 3-seater">
+        </div>
+        <div class="form-field">
+          <label>Delivery date</label>
+          <input type="date" id="c-delivery-date">
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Complaint details</label>
+        <textarea id="c-details" placeholder="Describe the issue in detail…"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Root cause</label>
+          <select id="c-rootcause">
+            <option value="">Select…</option>
+            <option>Factory listing mistake</option>
+            <option>QC failure</option>
+            <option>Packaging not proper</option>
+            <option>Finish not standardized</option>
+            <option>Site not ready at delivery</option>
+            <option>Damage during transit</option>
+            <option>Client changed mind</option>
+            <option>Measurement error</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Assignee</label>
+          <select id="c-assignee">
+            <option value="">Select…</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Resolution type</label>
+          <select id="c-resolution">
+            <option value="">Pending assessment</option>
+            <option>Repair at site</option>
+            <option>Pickup & repair</option>
+            <option>Replacement</option>
+            <option>No action needed</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Pickup date</label>
+          <input type="date" id="c-pickup-date">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-complaint')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveComplaint()">Save complaint</button>
+    </div>
+  </div>
+</div>
+
+<!-- New QC Defect Modal -->
+<div class="modal-backdrop" id="modal-qc">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Log QC defect</div>
+      <button class="modal-close" onclick="closeModal('modal-qc')">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="16" y2="16"/><line x1="16" y1="2" x2="2" y2="16"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Project</label>
+          <select id="q-project">
+            <option value="">Select project…</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Stage</label>
+          <select id="q-stage">
+            <option value="Structure">Structure</option>
+            <option value="Polish">Polish</option>
+            <option value="Upholstery">Upholstery</option>
+            <option value="Packing">Packing</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Product name</label>
+          <input type="text" id="q-product" placeholder="e.g. Dining table">
+        </div>
+        <div class="form-field">
+          <label>Severity</label>
+          <select id="q-severity">
+            <option value="Low">Low</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="High">High</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Issue description</label>
+        <textarea id="q-issue" placeholder="Describe the defect…"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Inspector</label>
+          <input type="text" id="q-inspector" placeholder="Inspector name">
+        </div>
+        <div class="form-field">
+          <label>Responsible team</label>
+          <select id="q-team">
+            <option value="Structure">Structure</option>
+            <option value="Polish">Polish</option>
+            <option value="Upholstery">Upholstery</option>
+            <option value="Packing">Packing</option>
+            <option value="Design">Design</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Deadline to fix</label>
+        <input type="date" id="q-deadline">
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-qc')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQCDefect()">Log defect</button>
+    </div>
+  </div>
+</div>
+
+<!-- Update Status Modal -->
+<div class="modal-backdrop" id="modal-update">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="update-modal-title">Update status</div>
+      <button class="modal-close" onclick="closeModal('modal-update')">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="16" y2="16"/><line x1="16" y1="2" x2="2" y2="16"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-panel" id="update-detail"></div>
+      <div class="form-field">
+        <label>Update status to</label>
+        <select id="u-status">
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Pickup Scheduled">Pickup Scheduled</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Notes</label>
+        <textarea id="u-notes" placeholder="Add any update notes…" style="min-height:60px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-update')">Cancel</button>
+      <button class="btn btn-primary" onclick="updateStatus()">Update</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js';
+
+  import {
+    getFirestore, collection, addDoc, onSnapshot, query,
+    orderBy, doc, getDoc, getDocs, updateDoc, serverTimestamp
+  } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyC0aoUyBCHn63-WkJnPFbDJLF0x1GFMyxU",
+    authDomain:        "lyffin-platform.firebaseapp.com",
+    projectId:         "lyffin-platform",
+    storageBucket:     "lyffin-platform.firebasestorage.app",
+    messagingSenderId: "618920465280",
+    appId:             "1:618920465280:web:11ba5583ff3f2b778a2765"
+  };
+
+  const app     = initializeApp(firebaseConfig);
+  const auth    = getAuth(app);
+  const db      = getFirestore(app);
+
+
+  let currentRole = null;
+  let currentUser = null;
+  let userData = {};
+  let allComplaints = [];
+  let allQC = [];
+  let projects = [];
+  let currentUpdateId = null;
+  let currentUpdateType = null;
+
+  // ── AUTH ──────────────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUser = user;
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    const data = snap.exists() ? snap.data() : {};
+    currentRole = data.role || 'sales';
+    userData = data;
+    const name = data.name || user.email.split('@')[0];
+    document.getElementById('user-name').textContent = name;
+    document.getElementById('user-role').textContent = currentRole;
+    document.getElementById('user-avatar').textContent = name.substring(0,2).toUpperCase();
+    if (currentRole === 'admin') {
+      document.getElementById('nav-admin-section').style.display = 'block';
+      document.getElementById('nav-admin').style.display = 'flex';
+      const bnA = document.getElementById('bn-admin');
+      if (bnA) bnA.style.display = 'flex';
+    }
+    // Hide QC log button for non-QC roles
+    if (!['admin','qc','supervisor'].includes(currentRole)) {
+      document.getElementById('btn-new-qc').style.display = 'none';
+    }
+    loadData();
+  });
+
+  // ── LOAD DATA ─────────────────────────────────────────────────────────────
+  async function loadAssignees() {
+    const snap = await getDocs(collection(db, 'users'));
+    const users = snap.docs.map(d => d.data()).filter(u => !u.pending);
+    const sel = document.getElementById('c-assignee');
+    if (sel) sel.innerHTML = '<option value="">Select…</option>' +
+      users.map(u => '<option>' + (u.name||u.email) + '</option>').join('');
+  }
+
+  async function loadData() {
+    // Load projects for dropdowns
+    const projSnap = await getDocs(collection(db, 'projects'));
+    projects = projSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    populateProjectDropdowns();
+    loadAssignees();
+
+    // Load complaints real-time
+    onSnapshot(query(collection(db, 'complaints'), orderBy('createdAt', 'desc')), (snap) => {
+      let complaints = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Sales only see complaints for their assigned projects
+      if (currentRole === 'sales') {
+        const myProjects = projects.filter(p => p.assignee === (userData.name || currentUser.email.split('@')[0])).map(p => p.id);
+        complaints = complaints.filter(c => myProjects.includes(c.projectId));
+      }
+      allComplaints = complaints;
+      updateStats();
+      renderComplaints(allComplaints);
+    });
+
+    // Load QC defects real-time
+    onSnapshot(query(collection(db, 'qc_reports'), orderBy('createdAt', 'desc')), (snap) => {
+      allQC = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      updateStats();
+      renderQC(allQC);
+      document.getElementById('page-loading').style.display = 'none';
+    });
+  }
+
+  function populateProjectDropdowns() {
+    const opts = '<option value="">Select project…</option>' +
+      projects.map(p => `<option value="${p.id}">${esc(p.projectName || p.id)}</option>`).join('');
+    document.getElementById('c-project').innerHTML = opts;
+    document.getElementById('q-project').innerHTML = opts;
+  }
+
+  function updateStats() {
+    document.getElementById('stat-open').textContent = allComplaints.filter(c => c.status === 'Pending').length;
+    document.getElementById('stat-progress').textContent = allComplaints.filter(c => c.status === 'In Progress' || c.status === 'Pickup Scheduled').length;
+    document.getElementById('stat-resolved').textContent = allComplaints.filter(c => c.status === 'Resolved').length;
+    document.getElementById('stat-qc').textContent = allQC.filter(q => q.status !== 'Resolved').length;
+  }
+
+  // ── RENDER COMPLAINTS ─────────────────────────────────────────────────────
+  function renderComplaints(data) {
+    const tbody = document.getElementById('complaints-tbody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">No complaints logged yet.</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(c => {
+      const statusClass = 'badge-' + (c.status || 'pending').toLowerCase().replace(/\s+/g, '-');
+      const projName = projects.find(p => p.id === c.projectId)?.projectName || c.projectId || '—';
+      return `<tr onclick="openUpdateModal('${c.id}','complaint')">
+        <td><strong>${esc(projName)}</strong></td>
+        <td>${esc(c.productName || '—')}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.details)}">${esc(c.details || '—')}</td>
+        <td style="font-size:12px;color:var(--ink-3)">${esc(c.rootCause || '—')}</td>
+        <td>${esc(c.assignee || '—')}</td>
+        <td><span class="badge ${statusClass}">${c.status || 'Pending'}</span></td>
+        <td style="font-size:12px;color:var(--ink-3)">${formatDate(c.complaintDate)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── RENDER QC ─────────────────────────────────────────────────────────────
+  function renderQC(data) {
+    const tbody = document.getElementById('qc-tbody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">No QC defects logged yet.</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(q => {
+      const sevClass = 'sev-' + (q.severity || 'low').toLowerCase();
+      const statusClass = 'badge-' + (q.status || 'pending').toLowerCase().replace(/\s+/g, '-');
+      const projName = projects.find(p => p.id === q.projectId)?.projectName || q.projectId || '—';
+      return `<tr onclick="openUpdateModal('${q.id}','qc')">
+        <td><strong>${esc(projName)}</strong></td>
+        <td>${esc(q.productName || '—')}</td>
+        <td><span class="badge badge-pending" style="font-size:11px">${esc(q.stage || '—')}</span></td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(q.issue)}">${esc(q.issue || '—')}</td>
+        <td class="${sevClass}">${q.severity || '—'}</td>
+        <td>${esc(q.inspector || '—')}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="badge ${statusClass}">${q.status || 'Pending'}</span>
+
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── TABS ──────────────────────────────────────────────────────────────────
+  window.switchTab = function(tab, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-complaints').style.display = tab === 'complaints' ? 'block' : 'none';
+    document.getElementById('tab-qc').style.display = tab === 'qc' ? 'block' : 'none';
+  };
+
+  // ── FILTERS ───────────────────────────────────────────────────────────────
+  window.filterComplaints = function(q) {
+    const filtered = allComplaints.filter(c =>
+      (c.productName||'').toLowerCase().includes(q.toLowerCase()) ||
+      (projects.find(p=>p.id===c.projectId)?.projectName||'').toLowerCase().includes(q.toLowerCase())
+    );
+    renderComplaints(filtered);
+  };
+
+  window.filterComplaintsByStatus = function(status) {
+    renderComplaints(status ? allComplaints.filter(c => c.status === status) : allComplaints);
+  };
+
+  window.filterQC = function(q) {
+    const filtered = allQC.filter(r =>
+      (r.productName||'').toLowerCase().includes(q.toLowerCase()) ||
+      (projects.find(p=>p.id===r.projectId)?.projectName||'').toLowerCase().includes(q.toLowerCase())
+    );
+    renderQC(filtered);
+  };
+
+  window.filterQCByStage = function(stage) {
+    renderQC(stage ? allQC.filter(r => r.stage === stage) : allQC);
+  };
+
+  // ── NEW COMPLAINT ─────────────────────────────────────────────────────────
+  window.openNewComplaint = function() {
+    document.getElementById('c-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('modal-complaint').classList.add('open');
+  };
+
+  window.saveComplaint = async function() {
+    const data = {
+      projectId:    document.getElementById('c-project').value,
+      complaintDate:document.getElementById('c-date').value,
+      productName:  document.getElementById('c-product').value.trim(),
+      deliveryDate: document.getElementById('c-delivery-date').value,
+      details:      document.getElementById('c-details').value.trim(),
+      rootCause:    document.getElementById('c-rootcause').value,
+      assignee:     document.getElementById('c-assignee').value,
+      resolution:   document.getElementById('c-resolution').value,
+      pickupDate:   document.getElementById('c-pickup-date').value,
+      status:       'Pending',
+      createdAt:    serverTimestamp(),
+      createdBy:    currentUser.uid,
+    };
+    if (!data.productName || !data.details) { showToast('Product name and details are required'); return; }
+    try {
+      await addDoc(collection(db, 'complaints'), data);
+      closeModal('modal-complaint');
+      showToast('Complaint logged');
+    } catch(e) { showToast('Error: ' + e.message); }
+  };
+
+  // ── NEW QC DEFECT ─────────────────────────────────────────────────────────
+  window.openNewQC = function() {
+    document.getElementById('q-deadline').value = '';
+    document.getElementById('modal-qc').classList.add('open');
+  };
+
+  window.saveQCDefect = async function() {
+    const data = {
+      projectId:   document.getElementById('q-project').value,
+      stage:       document.getElementById('q-stage').value,
+      productName: document.getElementById('q-product').value.trim(),
+      severity:    document.getElementById('q-severity').value,
+      issue:       document.getElementById('q-issue').value.trim(),
+      inspector:   document.getElementById('q-inspector').value.trim(),
+      team:        document.getElementById('q-team').value,
+      deadline:    document.getElementById('q-deadline').value,
+      status:      'Pending',
+      createdAt:   serverTimestamp(),
+      createdBy:   currentUser.uid,
+    };
+    if (!data.productName || !data.issue) { showToast('Product name and issue are required'); return; }
+    try {
+      await addDoc(collection(db, 'qc_reports'), data);
+      closeModal('modal-qc');
+      showToast('QC defect logged');
+    } catch(e) { showToast('Error: ' + e.message); }
+  };
+
+  // ── UPDATE STATUS ─────────────────────────────────────────────────────────
+  window.openUpdateModal = function(id, type) {
+    currentUpdateId = id;
+    currentUpdateType = type;
+    const record = type === 'complaint'
+      ? allComplaints.find(c => c.id === id)
+      : allQC.find(q => q.id === id);
+    if (!record) return;
+
+    const projName = projects.find(p => p.id === record.projectId)?.projectName || '—';
+    document.getElementById('update-modal-title').textContent = type === 'complaint' ? 'Update complaint' : 'Update QC defect';
+    document.getElementById('update-detail').innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-item"><label>Project</label><span>${esc(projName)}</span></div>
+        <div class="detail-item"><label>Product</label><span>${esc(record.productName||'—')}</span></div>
+        <div class="detail-item"><label>Current status</label><span>${record.status||'Pending'}</span></div>
+        <div class="detail-item" style="grid-column:1/-1"><label>Details</label><span>${esc(record.details||record.issue||'—')}</span></div>
+        ${record.rootCause ? `<div class="detail-item"><label>Root cause</label><span>${esc(record.rootCause)}</span></div>` : ''}
+        ${record.assignee ? `<div class="detail-item"><label>Assignee</label><span>${esc(record.assignee)}</span></div>` : ''}
+
+      </div>`;
+
+    const statusSel = document.getElementById('u-status');
+    statusSel.innerHTML = type === 'complaint'
+      ? `<option>Pending</option><option>In Progress</option><option>Pickup Scheduled</option><option>Resolved</option>`
+      : `<option>Pending</option><option>In Progress</option><option>Resolved</option>`;
+    statusSel.value = record.status || 'Pending';
+    document.getElementById('u-notes').value = '';
+    document.getElementById('modal-update').classList.add('open');
+  };
+
+  window.updateStatus = async function() {
+    const newStatus = document.getElementById('u-status').value;
+    const notes = document.getElementById('u-notes').value.trim();
+    const collName = currentUpdateType === 'complaint' ? 'complaints' : 'qc_reports';
+    try {
+      await updateDoc(doc(db, collName, currentUpdateId), {
+        status: newStatus,
+        ...(notes ? { lastNote: notes } : {}),
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser.uid,
+      });
+      closeModal('modal-update');
+      showToast('Status updated to ' + newStatus);
+    } catch(e) { showToast('Error: ' + e.message); }
+  };
+
+  // ── HELPERS ───────────────────────────────────────────────────────────────
+  window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
+  window.signOut = async function() { await fbSignOut(auth); window.location.href = 'login.html'; };
+
+  function formatDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  function esc(s) {
+    return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+</script>
+
+
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a class="bn-item" href="dashboard.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Projects
+    </a>
+    <a class="bn-item" href="production.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/><path d="M2 12h12"/></svg>
+      Factory
+    </a>
+    <a class="bn-item active" href="qc.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4L2 5h4z"/></svg>
+      QC
+    </a>
+    <a class="bn-item" href="admin.html" id="bn-admin" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="14" height="10" rx="1"/><path d="M5 15h6M8 11v4"/></svg>
+      Admin
+    </a>
+    <a class="bn-item" href="account.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Account
+    </a>
+  </div>
+</div>
+</body>
+</html>

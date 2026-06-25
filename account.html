@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lyffin Ops — Account</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a1a18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lyffin Ops">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#1a1a18;--ink-2:#4a4a46;--ink-3:#9a9890;--surface:#f7f6f2;--surface-2:#eeecea;--border:#dddbd5;--gold:#b89a6a;--gold-lt:rgba(184,154,106,0.12);--white:#ffffff;--radius:6px;--sidebar-w:220px;--font-sans:'Inter',system-ui,sans-serif;--font-disp:'Playfair Display',Georgia,serif}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:wght@500;600&display=swap');
+body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min-height:100vh;display:flex}
+.sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--ink);display:flex;flex-direction:column;flex-shrink:0;position:fixed;left:0;top:0;bottom:0}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.sidebar-logo-name{font-family:var(--font-disp);font-size:18px;font-weight:600;color:var(--white)}
+.sidebar-logo-sub{font-size:10px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.sidebar-nav{flex:1;padding:16px 10px;display:flex;flex-direction:column;gap:2px}
+.nav-section{font-size:10px;font-weight:500;color:rgba(255,255,255,0.25);letter-spacing:.1em;text-transform:uppercase;padding:12px 10px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:5px;font-size:13.5px;color:rgba(255,255,255,0.55);cursor:pointer;text-decoration:none;transition:background .12s,color .12s}
+.nav-item:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.85)}
+.nav-item.active{background:rgba(184,154,106,0.18);color:var(--gold)}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-user{padding:16px 20px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px}
+.user-avatar-lg{width:32px;height:32px;border-radius:50%;background:rgba(184,154,106,0.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--gold);flex-shrink:0}
+.user-name{font-size:13px;font-weight:500;color:rgba(255,255,255,0.8)}
+.user-role{font-size:11px;color:rgba(255,255,255,0.3);text-transform:capitalize}
+.btn-signout-side{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.25);padding:4px;border-radius:4px;display:flex;align-items:center;transition:color .12s;margin-left:auto}
+.btn-signout-side:hover{color:rgba(255,255,255,0.6)}
+.btn-signout-side svg{width:15px;height:15px}
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 32px;height:60px;display:flex;align-items:center}
+.topbar-title{font-family:var(--font-disp);font-size:18px;font-weight:500}
+.content{padding:28px 32px;flex:1;max-width:560px}
+
+/* Profile card */
+.profile-card{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.profile-header{background:var(--ink);padding:32px 24px;display:flex;align-items:center;gap:20px}
+.profile-avatar{width:72px;height:72px;border-radius:50%;background:rgba(184,154,106,0.25);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:500;color:var(--gold);flex-shrink:0;border:2px solid rgba(184,154,106,0.3)}
+.profile-name{font-family:var(--font-disp);font-size:22px;font-weight:500;color:var(--white)}
+.profile-email{font-size:13px;color:rgba(255,255,255,0.4);margin-top:3px}
+.role-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;background:rgba(184,154,106,0.2);color:var(--gold);margin-top:8px;text-transform:capitalize}
+.profile-body{padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--surface-2)}
+.info-row:last-child{border-bottom:none}
+.info-label{font-size:12px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.info-value{font-size:14px;color:var(--ink);font-weight:500}
+
+/* Action buttons */
+.action-card{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.action-item{display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid var(--surface-2);cursor:pointer;text-decoration:none;transition:background .12s;color:var(--ink)}
+.action-item:last-child{border-bottom:none}
+.action-item:hover{background:var(--surface)}
+.action-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.action-icon svg{width:18px;height:18px}
+.action-text{flex:1}
+.action-title{font-size:14px;font-weight:500}
+.action-sub{font-size:12px;color:var(--ink-3);margin-top:1px}
+.action-chevron{color:var(--ink-3)}
+.action-chevron svg{width:14px;height:14px}
+
+.btn-signout-main{width:100%;height:48px;background:var(--white);color:#c0392b;border:1.5px solid #f5c6c6;border-radius:10px;font-size:14px;font-weight:500;font-family:var(--font-sans);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s}
+.btn-signout-main:hover{background:#fdf2f2}
+.btn-signout-main svg{width:16px;height:16px}
+
+/* Bottom nav */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--ink);height:64px;z-index:50;border-top:1px solid rgba(255,255,255,0.08);padding-bottom:env(safe-area-inset-bottom)}
+.bottom-nav-inner{display:flex;height:100%;align-items:stretch;width:100%;justify-content:space-around}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:rgba(255,255,255,0.35);font-size:9px;font-weight:500;font-family:var(--font-sans);letter-spacing:.03em;text-transform:uppercase;cursor:pointer;border:none;background:none;transition:color .15s;padding:0}
+.bn-item.active{color:var(--gold)}
+.bn-item svg{width:22px;height:22px}
+
+.page-loading{position:fixed;inset:0;background:var(--surface);display:flex;align-items:center;justify-content:center;z-index:999}
+.spin-lg{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:700px){
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .content{padding:20px 16px 90px;max-width:100%}
+  .topbar{padding:0 16px;height:52px}
+  .topbar-title{font-size:16px}
+  .bottom-nav{display:flex}
+  .profile-header{padding:24px 20px}
+  .profile-avatar{width:60px;height:60px;font-size:22px}
+  .profile-name{font-size:18px}
+}
+</style>
+</head>
+<body>
+<div class="page-loading" id="page-loading"><div class="spin-lg"></div></div>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-name">lyffin</div>
+    <div class="sidebar-logo-sub">Ops Platform</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Workspace</div>
+    <a class="nav-item" href="dashboard.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Projects
+    </a>
+    <a class="nav-item" href="production.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/><path d="M2 12h12"/></svg>Production
+    </a>
+    <a class="nav-item" href="qc.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4L2 5h4z"/></svg>QC &amp; Complaints
+    </a>
+    <div class="nav-section" id="nav-admin-section" style="display:none">Admin</div>
+    <a class="nav-item" href="admin.html" id="nav-admin" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Admin dashboard
+    </a>
+    <div class="nav-section">Account</div>
+    <a class="nav-item active" href="account.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>My account
+    </a>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar-lg" id="user-avatar">?</div>
+    <div>
+      <div class="user-name" id="user-name">Loading</div>
+      <div class="user-role" id="user-role">-</div>
+    </div>
+    <button class="btn-signout-side" onclick="signOut()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M11 11l4-4-4-4"/><path d="M15 8H6"/><path d="M6 14H2a1 1 0 01-1-1V3a1 1 0 011-1h4"/></svg>
+    </button>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar"><div class="topbar-title">Account</div></div>
+  <div class="content">
+
+    <!-- Profile card -->
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="profile-avatar" id="profile-avatar">?</div>
+        <div>
+          <div class="profile-name" id="profile-name">Loading…</div>
+          <div class="profile-email" id="profile-email">—</div>
+          <div class="role-badge" id="profile-role">—</div>
+        </div>
+      </div>
+      <div class="profile-body">
+        <div class="info-row">
+          <span class="info-label">Role</span>
+          <span class="info-value" id="info-role">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Email</span>
+          <span class="info-value" id="info-email">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Platform</span>
+          <span class="info-value">Lyffin Ops</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="action-card">
+      <a class="action-item" href="dashboard.html">
+        <div class="action-icon" style="background:#f0fdf4">
+          <svg viewBox="0 0 16 16" fill="none" stroke="#16a34a" stroke-width="1.4"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        </div>
+        <div class="action-text">
+          <div class="action-title">Projects</div>
+          <div class="action-sub">View all active projects</div>
+        </div>
+        <div class="action-chevron"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg></div>
+      </a>
+      <a class="action-item" href="production.html">
+        <div class="action-icon" style="background:#fef3cd">
+          <svg viewBox="0 0 16 16" fill="none" stroke="#d97706" stroke-width="1.4"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/><path d="M2 12h12"/></svg>
+        </div>
+        <div class="action-text">
+          <div class="action-title">Production</div>
+          <div class="action-sub">Factory floor tracker</div>
+        </div>
+        <div class="action-chevron"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg></div>
+      </a>
+      <a class="action-item" href="qc.html">
+        <div class="action-icon" style="background:#fdf2f2">
+          <svg viewBox="0 0 16 16" fill="none" stroke="#c0392b" stroke-width="1.4"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4L2 5h4z"/></svg>
+        </div>
+        <div class="action-text">
+          <div class="action-title">QC &amp; Complaints</div>
+          <div class="action-sub">Quality control and issues</div>
+        </div>
+        <div class="action-chevron"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg></div>
+      </a>
+      <a class="action-item" href="admin.html" id="admin-action" style="display:none">
+        <div class="action-icon" style="background:rgba(184,154,106,0.12)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="#b89a6a" stroke-width="1.4"><rect x="1" y="1" width="14" height="10" rx="1"/><path d="M5 15h6M8 11v4"/></svg>
+        </div>
+        <div class="action-text">
+          <div class="action-title">Admin Dashboard</div>
+          <div class="action-sub">Analytics and team management</div>
+        </div>
+        <div class="action-chevron"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg></div>
+      </a>
+    </div>
+
+    <!-- Sign out -->
+    <button class="btn-signout-main" onclick="signOut()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M11 11l4-4-4-4"/><path d="M15 8H6"/><path d="M6 14H2a1 1 0 01-1-1V3a1 1 0 011-1h4"/></svg>
+      Sign out
+    </button>
+
+    <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--ink-3)">Lyffin Ops Platform · ops.lyffin.com</div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a class="bn-item" href="dashboard.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Projects
+    </a>
+    <a class="bn-item" href="production.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/><path d="M2 12h12"/></svg>
+      Factory
+    </a>
+    <a class="bn-item" href="qc.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4L2 5h4z"/></svg>
+      QC
+    </a>
+    <a class="bn-item" href="admin.html" id="bn-admin" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Admin
+    </a>
+    <a class="bn-item active" href="account.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Account
+    </a>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC0aoUyBCHn63-WkJnPFbDJLF0x1GFMyxU",
+  authDomain: "lyffin-platform.firebaseapp.com",
+  projectId: "lyffin-platform",
+  storageBucket: "lyffin-platform.firebasestorage.app",
+  messagingSenderId: "618920465280",
+  appId: "1:618920465280:web:11ba5583ff3f2b778a2765"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const ROLE_LABELS = {admin:'Admin / Director',sales:'Sales',design:'Design',supervisor:'Factory Supervisor',floor:'Factory Floor',qc:'Quality Control'};
+
+onAuthStateChanged(auth, async function(user) {
+  if (!user) { window.location.href = 'login.html'; return; }
+  const snap = await getDoc(doc(db, 'users', user.uid));
+  const data = snap.exists() ? snap.data() : {};
+  const name = data.name || user.email.split('@')[0];
+  const role = data.role || 'sales';
+  const initials = name.substring(0,2).toUpperCase();
+  const roleLabel = ROLE_LABELS[role] || role;
+
+  // Update all name/role displays
+  document.getElementById('user-avatar').textContent = initials;
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('user-role').textContent = role;
+  document.getElementById('profile-avatar').textContent = initials;
+  document.getElementById('profile-name').textContent = name;
+  document.getElementById('profile-email').textContent = user.email;
+  document.getElementById('profile-role').textContent = roleLabel;
+  document.getElementById('info-role').textContent = roleLabel;
+  document.getElementById('info-email').textContent = user.email;
+
+  if (role === 'admin') {
+    document.getElementById('nav-admin-section').style.display = 'block';
+    document.getElementById('nav-admin').style.display = 'flex';
+    document.getElementById('bn-admin').style.display = 'flex';
+    document.getElementById('admin-action').style.display = 'flex';
+  }
+
+  document.getElementById('page-loading').style.display = 'none';
+});
+
+window.signOut = async function() {
+  await fbSignOut(auth);
+  window.location.href = 'login.html';
+};
+</script>
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js')}</script>
+</body>
+</html>

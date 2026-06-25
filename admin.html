@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a1a18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lyffin Ops">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lyffin Ops — Admin</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:       #1a1a18;
+    --ink-2:     #4a4a46;
+    --ink-3:     #9a9890;
+    --surface:   #f7f6f2;
+    --surface-2: #eeecea;
+    --border:    #dddbd5;
+    --gold:      #b89a6a;
+    --gold-lt:   rgba(184,154,106,0.12);
+    --white:     #ffffff;
+    --radius:    6px;
+    --sidebar-w: 220px;
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-disp: 'Playfair Display', Georgia, serif;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:wght@500;600&display=swap');
+
+  body { font-family: var(--font-sans); background: var(--surface); color: var(--ink); min-height: 100vh; display: flex; }
+
+  .sidebar { width: var(--sidebar-w); min-height: 100vh; background: var(--ink); display: flex; flex-direction: column; flex-shrink: 0; position: fixed; left: 0; top: 0; bottom: 0; }
+  .sidebar-logo { padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .sidebar-logo-name { font-family: var(--font-disp); font-size: 18px; font-weight: 600; color: var(--white); }
+  .sidebar-logo-sub { font-size: 10px; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+  .sidebar-nav { flex: 1; padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .nav-section { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.25); letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 10px 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 5px; font-size: 13.5px; color: rgba(255,255,255,0.55); cursor: pointer; text-decoration: none; transition: background 0.12s, color 0.12s; }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+  .nav-item.active { background: rgba(184,154,106,0.18); color: var(--gold); }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .sidebar-user { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 10px; }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(184,154,106,0.25); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--gold); flex-shrink: 0; }
+  .user-name { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.8); }
+  .user-role { font-size: 11px; color: rgba(255,255,255,0.3); text-transform: capitalize; }
+  .btn-signout { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.25); padding: 4px; border-radius: 4px; display: flex; align-items: center; transition: color 0.12s; margin-left: auto; }
+  .btn-signout:hover { color: rgba(255,255,255,0.6); }
+  .btn-signout svg { width: 15px; height: 15px; }
+
+  .main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+  .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .topbar-title { font-family: var(--font-disp); font-size: 18px; font-weight: 500; }
+  .topbar-date { font-size: 13px; color: var(--ink-3); }
+
+  .content { padding: 28px 32px; flex: 1; display: flex; flex-direction: column; gap: 24px; }
+
+  /* BIG STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+  .stat-label { font-size: 11px; font-weight: 500; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .stat-value { font-size: 32px; font-weight: 500; color: var(--ink); line-height: 1; }
+  .stat-sub { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+  .stat-card.highlight { border-color: var(--gold); background: var(--gold-lt); }
+  .stat-card.highlight .stat-value { color: var(--gold); }
+
+  /* TWO COL LAYOUT */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  /* SECTION CARD */
+  .section-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .section-header { padding: 16px 20px; border-bottom: 1px solid var(--surface-2); display: flex; align-items: center; justify-content: space-between; }
+  .section-title { font-size: 14px; font-weight: 500; color: var(--ink); }
+  .section-link { font-size: 12px; color: var(--gold); text-decoration: none; cursor: pointer; }
+  .section-link:hover { text-decoration: underline; }
+  .section-body { padding: 16px 20px; }
+
+  /* PIPELINE BAR */
+  .pipeline { display: flex; gap: 0; border-radius: 6px; overflow: hidden; height: 36px; margin-bottom: 12px; }
+  .pipeline-seg { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: white; transition: flex 0.4s ease; min-width: 0; overflow: hidden; white-space: nowrap; padding: 0 6px; }
+  .pipeline-seg span { overflow: hidden; text-overflow: ellipsis; }
+  .seg-structure  { background: #d97706; }
+  .seg-polish     { background: #3b82f6; }
+  .seg-upholstery { background: #0ea5e9; }
+  .seg-packing    { background: #10b981; }
+  .seg-delivered  { background: #16a34a; }
+  .seg-completed  { background: #6b7280; }
+
+  .pipeline-legend { display: flex; gap: 14px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ROOT CAUSE BARS */
+  .cause-list { display: flex; flex-direction: column; gap: 10px; }
+  .cause-item { display: flex; flex-direction: column; gap: 4px; }
+  .cause-label { display: flex; justify-content: space-between; font-size: 12px; }
+  .cause-name { color: var(--ink-2); }
+  .cause-count { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .cause-bar-bg { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+  .cause-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width 0.5s ease; }
+
+  /* WORKLOAD TABLE */
+  .workload-list { display: flex; flex-direction: column; gap: 0; }
+  .workload-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--surface-2); }
+  .workload-row:last-child { border-bottom: none; }
+  .workload-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--ink-2); flex-shrink: 0; }
+  .workload-name { flex: 1; font-size: 13px; font-weight: 500; }
+  .workload-count { font-size: 12px; color: var(--ink-3); }
+  .workload-bar-wrap { width: 80px; height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
+  .workload-bar { height: 100%; background: var(--gold); border-radius: 2px; }
+
+  /* RECENT ACTIVITY */
+  .activity-list { display: flex; flex-direction: column; gap: 0; }
+  .activity-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--surface-2); align-items: flex-start; }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .activity-dot-project { background: var(--gold); }
+  .activity-dot-complaint { background: #ef4444; }
+  .activity-dot-qc { background: #f59e0b; }
+  .activity-dot-production { background: #10b981; }
+  .activity-text { flex: 1; font-size: 13px; color: var(--ink-2); line-height: 1.4; }
+  .activity-text strong { color: var(--ink); }
+  .activity-time { font-size: 11px; color: var(--ink-3); flex-shrink: 0; }
+
+  /* UPCOMING DELIVERIES */
+  .delivery-list { display: flex; flex-direction: column; gap: 0; }
+  .delivery-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--surface-2); }
+  .delivery-row:last-child { border-bottom: none; }
+  .delivery-date { font-size: 12px; color: var(--ink-3); width: 72px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .delivery-name { flex: 1; font-size: 13px; font-weight: 500; }
+  .delivery-location { font-size: 12px; color: var(--ink-3); }
+  .days-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; flex-shrink: 0; }
+  .days-urgent { background: #fee2e2; color: #991b1b; }
+  .days-soon { background: #fef3cd; color: #92400e; }
+  .days-ok { background: #dcfce7; color: #14532d; }
+
+  /* EMPTY */
+  .empty-small { font-size: 13px; color: var(--ink-3); text-align: center; padding: 20px; }
+
+  /* LOADING */
+  .page-loading { position: fixed; inset: 0; background: var(--surface); display: flex; align-items: center; justify-content: center; z-index: 999; }
+  .spin-lg { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } .three-col { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 900px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+  
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+/* Mobile bottom nav */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--ink);
+  height: 60px;
+  z-index: 50;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.bottom-nav-inner {
+  display: flex;
+  height: 100%;
+}
+.bn-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 10px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  transition: color .15s;
+}
+.bn-item.active { color: var(--gold); }
+.bn-item svg { width: 20px; height: 20px; }
+
+}
+
+/* ── MOBILE APP STYLES ── */
+@media (max-width: 700px) {
+  body { font-size: 14px; }
+  .topbar { padding: 0 16px; height: 52px; }
+  .topbar-title { font-size: 16px; }
+  .content { padding: 16px 12px 80px; }
+  .stats-row { grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { padding: 14px 14px; }
+  .stat-value { font-size: 22px; }
+  .stat-label { font-size: 10px; }
+  .table-wrap { border-radius: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 500px; }
+  .filters { gap: 8px; }
+  .search-box { max-width: 100%; }
+  .filter-select { font-size: 12px; height: 34px; }
+  .btn { height: 38px; font-size: 12px; padding: 0 12px; }
+  .project-card { border-radius: 8px; }
+  .project-name { font-size: 14px; }
+  .project-meta { font-size: 11px; }
+  .progress-bar-bg { width: 80px; }
+  .section-card { border-radius: 8px; }
+  /* Production mobile */
+  .items-table th, .items-table td { padding: 10px 12px; }
+  .stages { gap: 4px; }
+  .sp { padding: 5px 10px; font-size: 11px; }
+  /* Make tap targets bigger */
+  .sp, .btn, .nav-item, .tab { min-height: 40px; }
+  /* Remove hover effects on touch */
+  .sp:hover { transform: none; }
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--ink);
+  height: 64px;
+  z-index: 50;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav-inner { display: flex; height: 100%; align-items: stretch; width: 100%; justify-content: space-around; }
+.bn-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px; text-decoration: none;
+  color: rgba(255,255,255,0.35); font-size: 9px; font-weight: 500;
+  font-family: var(--font-sans); letter-spacing: 0.03em; text-transform: uppercase;
+  cursor: pointer; border: none; background: none; transition: color .15s; padding: 0;
+}
+.bn-item.active { color: var(--gold); }
+.bn-item svg { width: 22px; height: 22px; }
+@media (max-width: 700px) {
+  .sidebar { display: none !important; }
+  .main { margin-left: 0 !important; }
+  .content { padding-bottom: 80px !important; }
+  .bottom-nav { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-loading" id="page-loading"><div class="spin-lg"></div></div>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-name">lyffin</div>
+    <div class="sidebar-logo-sub">Ops Platform</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Workspace</div>
+    <a class="nav-item" href="dashboard.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Projects
+    </a>
+    <a class="nav-item" href="production.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/><path d="M2 12h12"/></svg>
+      Production
+    </a>
+    <a class="nav-item" href="qc.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4L2 5h4z"/></svg>
+      QC & Complaints
+    </a>
+    <div class="nav-section">Admin</div>
+    <a class="nav-item active" href="admin.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Admin dashboard
+    </a>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="user-avatar">?</div>
+    <div>
+      <div class="user-name" id="user-name">Loading…</div>
+      <div class="user-role" id="user-role">—</div>
+    </div>
+    <button class="btn-signout" onclick="signOut()" title="Sign out">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M11 11l4-4-4-4"/><path d="M15 8H6"/><path d="M6 14H2a1 1 0 01-1-1V3a1 1 0 011-1h4"/></svg>
+    </button>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Admin Dashboard</div>
+    <div class="topbar-date" id="topbar-date"></div>
+  </div>
+
+  <div class="content">
+    <!-- Big stats -->
+    <div class="stats-grid">
+      <div class="stat-card highlight">
+        <div class="stat-label">Total projects</div>
+        <div class="stat-value" id="s-total">—</div>
+        <div class="stat-sub">all time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Ongoing</div>
+        <div class="stat-value" id="s-ongoing">—</div>
+        <div class="stat-sub">active projects</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">In production</div>
+        <div class="stat-value" id="s-production">—</div>
+        <div class="stat-sub">at factory now</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Open complaints</div>
+        <div class="stat-value" id="s-complaints">—</div>
+        <div class="stat-sub">need resolution</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value" id="s-completed">—</div>
+        <div class="stat-sub">this year</div>
+      </div>
+    </div>
+
+    <!-- Pipeline + Workload -->
+    <div class="two-col">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">Production pipeline</div>
+          <a class="section-link" href="production.html">View all →</a>
+        </div>
+        <div class="section-body">
+          <div class="pipeline" id="pipeline-bar"></div>
+          <div class="pipeline-legend" id="pipeline-legend"></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">Team workload</div>
+          <span class="section-link" onclick="window.location.href='dashboard.html'">View projects →</span>
+        </div>
+        <div class="section-body">
+          <div class="workload-list" id="workload-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Root causes + Upcoming deliveries -->
+    <div class="two-col">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">Complaint root causes</div>
+          <a class="section-link" href="qc.html">View all →</a>
+        </div>
+        <div class="section-body">
+          <div class="cause-list" id="cause-list"></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">Upcoming deliveries</div>
+          <a class="section-link" href="dashboard.html">View all →</a>
+        </div>
+        <div class="section-body">
+          <div class="delivery-list" id="delivery-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Complaint analytics -->
+    <div class="three-col">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">Complaints by product</div>
+        </div>
+        <div class="section-body">
+          <div class="cause-list" id="product-complaints-list"></div>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">Resolution time</div>
+        </div>
+        <div class="section-body" id="resolution-stats">
+          <div class="empty-small">Loading...</div>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">QC defects by stage</div>
+        </div>
+        <div class="section-body">
+          <div class="cause-list" id="qc-stage-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project progress timeline (Gantt-style) -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">Project progress tracker</div>
+        <span style="font-size:11px;color:var(--ink-3)">Ongoing projects by stage</span>
+      </div>
+      <div class="section-body" id="gantt-section" style="padding:0"></div>
+    </div>
+
+    <!-- Assignee management (admin only) -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">Team members</div>
+        <button onclick="openAddUser()" style="font-size:12px;color:var(--gold);background:none;border:none;cursor:pointer;font-weight:500">+ Add member</button>
+      </div>
+      <div class="section-body" id="team-list" style="padding:0"></div>
+    </div>
+
+    <!-- Recent activity -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">Recent activity</div>
+      </div>
+      <div class="section-body">
+        <div class="activity-list" id="activity-list"></div>
+      </div>
+    </div>
+
+    <!-- Add user modal -->
+    <div id="modal-adduser" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center">
+      <div style="background:var(--white);border-radius:10px;width:100%;max-width:440px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+        <div style="font-family:var(--font-disp);font-size:20px;font-weight:500;margin-bottom:20px">Add team member</div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label style="font-size:11px;font-weight:500;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Name</label>
+            <input id="au-name" type="text" placeholder="Full name" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13.5px;font-family:var(--font-sans);outline:none">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:500;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Email</label>
+            <input id="au-email" type="email" placeholder="email@lyffin.com" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13.5px;font-family:var(--font-sans);outline:none">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:500;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px">Role</label>
+            <select id="au-role" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13.5px;font-family:var(--font-sans);outline:none">
+              <option value="sales">Sales</option>
+              <option value="design">Design</option>
+              <option value="supervisor">Factory Supervisor</option>
+              <option value="floor">Factory Floor</option>
+              <option value="qc">QC</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div style="font-size:12px;color:var(--ink-3);background:var(--surface);padding:10px 12px;border-radius:var(--radius)">
+            Note: After adding, go to Firebase Console → Authentication → Add user with this email and set a password. Then their role will be active here.
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+          <button onclick="closeAddUser()" style="height:36px;padding:0 16px;border-radius:var(--radius);font-size:13px;font-weight:500;font-family:var(--font-sans);cursor:pointer;background:transparent;color:var(--ink-2);border:1px solid var(--border)">Cancel</button>
+          <button onclick="saveNewUser()" style="height:36px;padding:0 16px;border-radius:var(--radius);font-size:13px;font-weight:500;font-family:var(--font-sans);cursor:pointer;background:var(--ink);color:var(--white);border:none">Save member</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js';
+  import {
+    getFirestore, collection, getDocs, onSnapshot,
+    query, orderBy, limit, doc, getDoc, setDoc
+  } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyC0aoUyBCHn63-WkJnPFbDJLF0x1GFMyxU",
+    authDomain:        "lyffin-platform.firebaseapp.com",
+    projectId:         "lyffin-platform",
+    storageBucket:     "lyffin-platform.firebasestorage.app",
+    messagingSenderId: "618920465280",
+    appId:             "1:618920465280:web:11ba5583ff3f2b778a2765"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const PROD_STATUSES = ['Structure','Polish','Upholstery','Packing'];
+
+  // Date
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // ── AUTH ──────────────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    const data = snap.exists() ? snap.data() : {};
+    if (data.role !== 'admin') { window.location.href = 'dashboard.html'; return; }
+    const name = data.name || user.email.split('@')[0];
+    document.getElementById('user-name').textContent = name;
+    document.getElementById('user-role').textContent = data.role;
+    document.getElementById('user-avatar').textContent = name.substring(0,2).toUpperCase();
+    loadDashboard();
+  });
+
+  // ── LOAD ALL DATA ─────────────────────────────────────────────────────────
+  async function loadDashboard() {
+    const [projSnap, complSnap, qcSnap] = await Promise.all([
+      getDocs(collection(db, 'projects')),
+      getDocs(collection(db, 'complaints')),
+      getDocs(collection(db, 'qc_reports')),
+    ]);
+
+    const projects   = projSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const complaints = complSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const qcReports  = qcSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    renderStats(projects, complaints);
+    renderPipeline(projects);
+    renderWorkload(projects);
+    renderRootCauses(complaints);
+    renderDeliveries(projects);
+    renderActivity(projects, complaints, qcReports);
+    renderAnalytics(complaints, qcReports);
+    renderGantt(projects);
+    loadTeam();
+
+    document.getElementById('page-loading').style.display = 'none';
+  }
+
+  // ── STATS ─────────────────────────────────────────────────────────────────
+  function renderStats(projects, complaints) {
+    const thisYear = new Date().getFullYear();
+    document.getElementById('s-total').textContent = projects.length;
+    document.getElementById('s-ongoing').textContent = projects.filter(p => p.deliveryStatus === 'Ongoing').length;
+    document.getElementById('s-production').textContent = projects.filter(p => PROD_STATUSES.includes(p.status)).length;
+    document.getElementById('s-complaints').textContent = complaints.filter(c => c.status !== 'Resolved').length;
+    document.getElementById('s-completed').textContent = projects.filter(p => p.status === 'Completed').length;
+  }
+
+  // ── PIPELINE ──────────────────────────────────────────────────────────────
+  function renderPipeline(projects) {
+    const stages = [
+      { key: 'Structure',  cls: 'seg-structure',  label: 'Structure' },
+      { key: 'Polish',     cls: 'seg-polish',      label: 'Polish' },
+      { key: 'Upholstery', cls: 'seg-upholstery',  label: 'Upholstery' },
+      { key: 'Packing',    cls: 'seg-packing',     label: 'Packing' },
+      { key: 'Delivered',  cls: 'seg-delivered',   label: 'Delivered' },
+      { key: 'Completed',  cls: 'seg-completed',   label: 'Completed' },
+    ];
+    const counts = {};
+    stages.forEach(s => counts[s.key] = projects.filter(p => p.status === s.key).length);
+    const total = Object.values(counts).reduce((a,b) => a+b, 0) || 1;
+
+    const bar = document.getElementById('pipeline-bar');
+    const legend = document.getElementById('pipeline-legend');
+    const colors = { Structure:'#d97706', Polish:'#3b82f6', Upholstery:'#0ea5e9', Packing:'#10b981', Delivered:'#16a34a', Completed:'#6b7280' };
+
+    bar.innerHTML = stages.filter(s => counts[s.key] > 0).map(s => {
+      const pct = (counts[s.key] / total * 100).toFixed(1);
+      return `<div class="pipeline-seg ${s.cls}" style="flex:${counts[s.key]}"><span>${counts[s.key]}</span></div>`;
+    }).join('');
+
+    legend.innerHTML = stages.map(s => `
+      <div class="legend-item">
+        <div class="legend-dot" style="background:${colors[s.key]}"></div>
+        ${s.label} (${counts[s.key]})
+      </div>`).join('');
+  }
+
+  // ── WORKLOAD ──────────────────────────────────────────────────────────────
+  function renderWorkload(projects) {
+    const ongoing = projects.filter(p => p.deliveryStatus === 'Ongoing');
+    const byAssignee = {};
+    ongoing.forEach(p => {
+      const a = p.assignee || 'Unassigned';
+      byAssignee[a] = (byAssignee[a] || 0) + 1;
+    });
+    const sorted = Object.entries(byAssignee).sort((a,b) => b[1]-a[1]);
+    const max = sorted[0]?.[1] || 1;
+
+    const el = document.getElementById('workload-list');
+    if (!sorted.length) { el.innerHTML = '<div class="empty-small">No ongoing projects</div>'; return; }
+    el.innerHTML = sorted.map(([name, count]) => `
+      <div class="workload-row">
+        <div class="workload-avatar">${name.substring(0,2).toUpperCase()}</div>
+        <div class="workload-name">${esc(name)}</div>
+        <div class="workload-bar-wrap"><div class="workload-bar" style="width:${(count/max*100).toFixed(0)}%"></div></div>
+        <div class="workload-count">${count} project${count>1?'s':''}</div>
+      </div>`).join('');
+  }
+
+  // ── ROOT CAUSES ───────────────────────────────────────────────────────────
+  function renderRootCauses(complaints) {
+    const counts = {};
+    complaints.forEach(c => {
+      const rc = c.rootCause || 'Unknown';
+      counts[rc] = (counts[rc] || 0) + 1;
+    });
+    const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 6);
+    const max = sorted[0]?.[1] || 1;
+
+    const el = document.getElementById('cause-list');
+    if (!sorted.length) { el.innerHTML = '<div class="empty-small">No complaints logged yet</div>'; return; }
+    el.innerHTML = sorted.map(([cause, count]) => `
+      <div class="cause-item">
+        <div class="cause-label">
+          <span class="cause-name">${esc(cause)}</span>
+          <span class="cause-count">${count}</span>
+        </div>
+        <div class="cause-bar-bg">
+          <div class="cause-bar-fill" style="width:${(count/max*100).toFixed(0)}%"></div>
+        </div>
+      </div>`).join('');
+  }
+
+  // ── UPCOMING DELIVERIES ───────────────────────────────────────────────────
+  function renderDeliveries(projects) {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    const upcoming = projects
+      .filter(p => p.handoverDate && p.status !== 'Completed')
+      .map(p => ({ ...p, dateObj: new Date(p.handoverDate) }))
+      .filter(p => p.dateObj >= today)
+      .sort((a,b) => a.dateObj - b.dateObj)
+      .slice(0, 6);
+
+    const el = document.getElementById('delivery-list');
+    if (!upcoming.length) { el.innerHTML = '<div class="empty-small">No upcoming deliveries</div>'; return; }
+
+    el.innerHTML = upcoming.map(p => {
+      const days = Math.round((p.dateObj - today) / 86400000);
+      const badgeClass = days <= 3 ? 'days-urgent' : days <= 7 ? 'days-soon' : 'days-ok';
+      const badgeText = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `${days}d`;
+      return `<div class="delivery-row">
+        <div class="delivery-date">${p.dateObj.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</div>
+        <div>
+          <div class="delivery-name">${esc(p.projectName||'—')}</div>
+          <div class="delivery-location">${esc(p.location||'')}</div>
+        </div>
+        <span class="days-badge ${badgeClass}">${badgeText}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // ── ACTIVITY ──────────────────────────────────────────────────────────────
+  function renderActivity(projects, complaints, qcReports) {
+    const events = [];
+
+    projects.forEach(p => {
+      if (p.createdAt?.seconds) {
+        events.push({ time: p.createdAt.seconds, dotClass: 'activity-dot-project', text: `New project <strong>${esc(p.projectName||'—')}</strong> created` });
+      }
+    });
+
+    complaints.forEach(c => {
+      if (c.createdAt?.seconds) {
+        events.push({ time: c.createdAt.seconds, dotClass: 'activity-dot-complaint', text: `Complaint logged for <strong>${esc(c.productName||'—')}</strong>` });
+      }
+    });
+
+    qcReports.forEach(q => {
+      if (q.createdAt?.seconds) {
+        events.push({ time: q.createdAt.seconds, dotClass: 'activity-dot-qc', text: `QC defect logged: <strong>${esc(q.productName||'—')}</strong> at ${esc(q.stage||'—')} stage` });
+      }
+    });
+
+    events.sort((a,b) => b.time - a.time);
+    const recent = events.slice(0, 10);
+
+    const el = document.getElementById('activity-list');
+    if (!recent.length) { el.innerHTML = '<div class="empty-small">No activity yet</div>'; return; }
+
+    el.innerHTML = recent.map(e => `
+      <div class="activity-item">
+        <div class="activity-dot ${e.dotClass}"></div>
+        <div class="activity-text">${e.text}</div>
+        <div class="activity-time">${timeAgo(e.time)}</div>
+      </div>`).join('');
+  }
+
+  // ── GANTT STYLE PROGRESS ──────────────────────────────────────────────────────
+  function renderGantt(projects) {
+    const STAGES = ['Not Started','Structure','Polish','Upholstery','Packing','Delivered','Completed'];
+    const COLORS = {'Not Started':'#e5e7eb','Structure':'#d97706','Polish':'#3b82f6','Upholstery':'#0ea5e9','Packing':'#10b981','Delivered':'#16a34a','Completed':'#6b7280'};
+    const PCTS  = {'Not Started':0,'Structure':15,'Polish':35,'Upholstery':55,'Packing':75,'Delivered':90,'Completed':100};
+
+    const ongoing = projects.filter(p => !['Delivered','Completed'].includes(p.status));
+    const el = document.getElementById('gantt-section');
+    if (!ongoing.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--ink-3);font-size:13px">No ongoing projects</div>'; return; }
+
+    el.innerHTML = ongoing.map(p => {
+      const pct = PCTS[p.status] || 0;
+      const color = COLORS[p.status] || '#e5e7eb';
+      const daysLeft = p.handoverDate ? Math.round((new Date(p.handoverDate) - new Date()) / 86400000) : null;
+      const urgency = daysLeft !== null ? (daysLeft < 0 ? 'color:#c0392b' : daysLeft <= 7 ? 'color:#d97706' : 'color:var(--ink-3)') : 'color:var(--ink-3)';
+      return '<div style="padding:14px 20px;border-bottom:1px solid var(--surface-2)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+          '<div>' +
+            '<span style="font-size:13px;font-weight:500">' + esc(p.projectName||'—') + '</span>' +
+            '<span style="font-size:11px;color:var(--ink-3);margin-left:8px">' + esc(p.assignee||'') + '</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:12px">' +
+            '<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;background:' + color + '20;color:' + color + '">' + (p.status||'Not Started') + '</span>' +
+            (daysLeft !== null ? '<span style="font-size:11px;' + urgency + '">' + (daysLeft < 0 ? Math.abs(daysLeft) + 'd overdue' : daysLeft + 'd left') + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div style="height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden">' +
+          '<div style="height:100%;width:' + pct + '%;background:' + color + ';border-radius:4px;transition:width .4s"></div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;margin-top:4px">' +
+          STAGES.map(s => '<span style="font-size:9px;color:' + (p.status === s ? color : 'var(--ink-3)') + ';font-weight:' + (p.status === s ? '600' : '400') + '">' + s + '</span>').join('') +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ── TEAM MANAGEMENT ───────────────────────────────────────────────────────────
+  async function loadTeam() {
+    const { getDocs, collection: col } = await import('https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js');
+    const snap = await getDocs(col(db, 'users'));
+    const users = snap.docs.map(d => Object.assign({id:d.id}, d.data()));
+    const el = document.getElementById('team-list');
+    if (!users.length) { el.innerHTML = '<div style="padding:16px 20px;font-size:13px;color:var(--ink-3)">No team members yet</div>'; return; }
+    el.innerHTML = users.map(u => {
+      const roleColors = {admin:'#b89a6a',sales:'#3b82f6',design:'#8b5cf6',supervisor:'#d97706',floor:'#10b981',qc:'#0ea5e9'};
+      const rc = roleColors[u.role] || '#9ca3af';
+      return '<div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--surface-2)">' +
+        '<div style="width:32px;height:32px;border-radius:50%;background:' + rc + '20;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:' + rc + ';flex-shrink:0">' + (u.name||'?').substring(0,2).toUpperCase() + '</div>' +
+        '<div style="flex:1">' +
+          '<div style="font-size:13px;font-weight:500">' + esc(u.name||'—') + '</div>' +
+          '<div style="font-size:11px;color:var(--ink-3)">' + esc(u.email||'') + '</div>' +
+        '</div>' +
+        '<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;background:' + rc + '15;color:' + rc + ';text-transform:capitalize">' + (u.role||'—') + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  window.openAddUser = function() {
+    document.getElementById('modal-adduser').style.display = 'flex';
+  };
+  window.closeAddUser = function() {
+    document.getElementById('modal-adduser').style.display = 'none';
+  };
+  window.saveNewUser = async function() {
+    const name  = document.getElementById('au-name').value.trim();
+    const email = document.getElementById('au-email').value.trim();
+    const role  = document.getElementById('au-role').value;
+    if (!name || !email) { alert('Name and email are required'); return; }
+    try {
+      const { doc: fDoc, setDoc } = await import('https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js');
+      // Use email as temp ID — will be replaced when user logs in with real UID
+      const tempId = 'pending_' + email.replace(/[^a-z0-9]/gi,'_');
+      await setDoc(fDoc(db, 'users', tempId), { name, email, role, pending: true });
+      closeAddUser();
+      alert('Member saved. Now create their account in Firebase Authentication with email: ' + email);
+      loadTeam();
+    } catch(e) { alert('Error: ' + e.message); }
+  };
+
+  // ── ANALYTICS ────────────────────────────────────────────────────────────────
+  function renderAnalytics(complaints, qcReports) {
+    // Complaints by product
+    const byProduct = {};
+    complaints.forEach(c => {
+      const k = c.productName || 'Unknown';
+      byProduct[k] = (byProduct[k] || 0) + 1;
+    });
+    const sortedProducts = Object.entries(byProduct).sort((a,b) => b[1]-a[1]).slice(0,5);
+    const maxP = sortedProducts[0]?.[1] || 1;
+    const productEl = document.getElementById('product-complaints-list');
+    if (!sortedProducts.length) { productEl.innerHTML = '<div class="empty-small">No complaints yet</div>'; }
+    else {
+      productEl.innerHTML = sortedProducts.map(([name, count]) =>
+        '<div class="cause-item">' +
+          '<div class="cause-label"><span class="cause-name">' + esc(name) + '</span><span class="cause-count">' + count + '</span></div>' +
+          '<div class="cause-bar-bg"><div class="cause-bar-fill" style="width:' + (count/maxP*100).toFixed(0) + '%"></div></div>' +
+        '</div>'
+      ).join('');
+    }
+
+    // Resolution time stats
+    const resolved = complaints.filter(c => c.status === 'Resolved' && c.complaintDate && c.updatedAt?.seconds);
+    let avgDays = 0;
+    if (resolved.length) {
+      const total = resolved.reduce((sum, c) => {
+        const start = new Date(c.complaintDate).getTime();
+        const end = c.updatedAt.seconds * 1000;
+        return sum + Math.max(0, (end - start) / 86400000);
+      }, 0);
+      avgDays = Math.round(total / resolved.length);
+    }
+    const pending = complaints.filter(c => c.status === 'Pending').length;
+    const inProgress = complaints.filter(c => c.status === 'In Progress' || c.status === 'Pickup Scheduled').length;
+    document.getElementById('resolution-stats').innerHTML =
+      '<div style="display:flex;flex-direction:column;gap:14px">' +
+        '<div><div class="stat-label" style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Avg resolution time</div>' +
+        '<div style="font-size:28px;font-weight:500">' + (resolved.length ? avgDays + 'd' : '—') + '</div>' +
+        '<div style="font-size:12px;color:var(--ink-3)">' + resolved.length + ' resolved</div></div>' +
+        '<div style="display:flex;gap:16px">' +
+          '<div><div style="font-size:22px;font-weight:500;color:#d97706">' + pending + '</div><div style="font-size:12px;color:var(--ink-3)">Pending</div></div>' +
+          '<div><div style="font-size:22px;font-weight:500;color:#3b82f6">' + inProgress + '</div><div style="font-size:12px;color:var(--ink-3)">In progress</div></div>' +
+        '</div>' +
+      '</div>';
+
+    // QC defects by stage
+    const byStage = {Structure:0, Polish:0, Upholstery:0, Packing:0};
+    qcReports.forEach(q => { if (byStage[q.stage] !== undefined) byStage[q.stage]++; });
+    const stageEntries = Object.entries(byStage).sort((a,b) => b[1]-a[1]);
+    const maxS = stageEntries[0]?.[1] || 1;
+    const stageEl = document.getElementById('qc-stage-list');
+    const hasQC = stageEntries.some(([,v]) => v > 0);
+    if (!hasQC) { stageEl.innerHTML = '<div class="empty-small">No QC defects logged</div>'; }
+    else {
+      stageEl.innerHTML = stageEntries.map(([stage, count]) =>
+        '<div class="cause-item">' +
+          '<div class="cause-label"><span class="cause-name">' + stage + '</span><span class="cause-count">' + count + '</span></div>' +
+          '<div class="cause-bar-bg"><div class="cause-bar-fill" style="width:' + (maxS ? (count/maxS*100).toFixed(0) : 0) + '%"></div></div>' +
+        '</div>'
+      ).join('');
+    }
+  }
+
+  // ── HELPERS ───────────────────────────────────────────────────────────────
+  function timeAgo(seconds) {
+    const diff = Math.floor(Date.now()/1000) - seconds;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+    return Math.floor(diff/86400) + 'd ago';
+  }
+
+  function esc(s) {
+    return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  window.signOut = async function() {
+    await fbSignOut(auth);
+    window.location.href = 'login.html';
+  };
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+</script>
+
+
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a class="bn-item" href="dashboard.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Projects
+    </a>
+    <a class="bn-item" href="production.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/><path d="M2 12h12"/></svg>
+      Factory
+    </a>
+    <a class="bn-item" href="qc.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4L2 5h4z"/></svg>
+      QC
+    </a>
+    <a class="bn-item active" href="admin.html" id="bn-admin" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="14" height="10" rx="1"/><path d="M5 15h6M8 11v4"/></svg>
+      Admin
+    </a>
+    <a class="bn-item" href="account.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Account
+    </a>
+  </div>
+</div>
+</body>
+</html>

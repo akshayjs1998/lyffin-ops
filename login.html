@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a1a18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lyffin Ops">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lyffin Ops — Sign in</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:       #1a1a18;
+    --ink-2:     #4a4a46;
+    --ink-3:     #9a9890;
+    --surface:   #f7f6f2;
+    --surface-2: #eeecea;
+    --border:    #dddbd5;
+    --gold:      #b89a6a;
+    --gold-dk:   #9a7e52;
+    --white:     #ffffff;
+    --danger:    #c0392b;
+    --radius:    6px;
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-disp: 'Playfair Display', Georgia, serif;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:wght@500;600&display=swap');
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--surface);
+    color: var(--ink);
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Left panel — brand */
+  .brand-panel {
+    background: var(--ink);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .brand-panel::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 360px; height: 360px;
+    border: 1px solid rgba(184,154,106,0.15);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .brand-panel::after {
+    content: '';
+    position: absolute;
+    bottom: 40px; left: -100px;
+    width: 280px; height: 280px;
+    border: 1px solid rgba(184,154,106,0.08);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-logo svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .brand-logo-text {
+    font-family: var(--font-disp);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--white);
+    letter-spacing: 0.02em;
+  }
+
+  .brand-logo-sub {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .brand-body {
+    z-index: 1;
+  }
+
+  .brand-headline {
+    font-family: var(--font-disp);
+    font-size: 36px;
+    font-weight: 500;
+    color: var(--white);
+    line-height: 1.25;
+    margin-bottom: 20px;
+  }
+
+  .brand-headline em {
+    color: var(--gold);
+    font-style: normal;
+  }
+
+  .brand-desc {
+    font-size: 14px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.7;
+    max-width: 320px;
+  }
+
+  .brand-footer {
+    font-size: 12px;
+    color: rgba(255,255,255,0.2);
+    z-index: 1;
+  }
+
+  /* Right panel — form */
+  .form-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 48px;
+  }
+
+  .form-wrap {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .form-title {
+    font-family: var(--font-disp);
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .form-sub {
+    font-size: 13px;
+    color: var(--ink-3);
+    margin-bottom: 36px;
+  }
+
+  .field {
+    margin-bottom: 18px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-2);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 7px;
+  }
+
+  .field input {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background: var(--white);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  .field input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(184,154,106,0.12);
+  }
+
+  .field input::placeholder {
+    color: var(--ink-3);
+  }
+
+  .btn-signin {
+    width: 100%;
+    height: 46px;
+    background: var(--ink);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 8px;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-signin:hover { background: #2e2e2a; }
+  .btn-signin:active { transform: scale(0.99); }
+  .btn-signin:disabled { background: var(--border); color: var(--ink-3); cursor: not-allowed; transform: none; }
+
+  .error-msg {
+    background: #fdf2f2;
+    border: 1px solid #f5c6c6;
+    color: var(--danger);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-top: 16px;
+    display: none;
+  }
+
+  .error-msg.show { display: block; }
+
+  .loading-ring {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .divider span {
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+
+  .form-footer {
+    margin-top: 32px;
+    font-size: 12px;
+    color: var(--ink-3);
+    text-align: center;
+  }
+
+  @media (max-width: 700px) {
+    body { grid-template-columns: 1fr; }
+    .brand-panel { display: none; }
+    .form-panel { padding: 32px 24px; }
+  }
+
+@media (max-width: 700px) {
+  body { grid-template-columns: 1fr; background: var(--ink); }
+  .brand-panel { display: none; }
+  .form-panel { background: var(--ink); padding: 48px 28px 40px; min-height: 100vh; }
+  .form-title { color: var(--white); font-size: 28px; }
+  .form-sub { color: rgba(255,255,255,0.4); }
+  .field label { color: rgba(255,255,255,0.5); }
+  .field input { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.12); color: var(--white); height: 50px; font-size: 16px; }
+  .field input:focus { border-color: var(--gold); }
+  .field input::placeholder { color: rgba(255,255,255,0.25); }
+  .btn-signin { height: 50px; font-size: 15px; background: var(--gold); color: var(--ink); }
+  .form-footer { color: rgba(255,255,255,0.3); }
+  .mobile-logo { display: flex !important; }
+}
+.mobile-logo { display: none; align-items: center; gap: 10px; margin-bottom: 36px; }
+.mobile-logo-text { font-family: var(--font-disp); font-size: 24px; font-weight: 600; color: var(--white); }
+.mobile-logo-sub { font-size: 10px; color: var(--gold); letter-spacing: 0.12em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+<!-- Left: brand panel -->
+<div class="brand-panel">
+  <div class="brand-logo">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 26V8l10-2 10 2v18H6z" stroke="#b89a6a" stroke-width="1.2" fill="none"/>
+      <path d="M6 26h20" stroke="#b89a6a" stroke-width="1.2"/>
+      <path d="M13 26V16h6v10" stroke="#b89a6a" stroke-width="1"/>
+    </svg>
+    <div>
+      <div class="brand-logo-text">lyffin</div>
+      <div class="brand-logo-sub">Ops</div>
+    </div>
+  </div>
+
+  <div class="brand-body">
+    <div class="brand-headline">
+      One place for<br>
+      every project,<br>
+      <em>every team.</em>
+    </div>
+    <p class="brand-desc">
+      From moodboard to delivery — Sales, Design, Factory, and QC working from the same source of truth.
+    </p>
+  </div>
+
+  <div class="brand-footer">
+    © 2025 Lyffin · ops.lyffin.com
+  </div>
+</div>
+
+<!-- Right: login form -->
+<div class="form-panel">
+  <div class="form-wrap">
+    <div class="mobile-logo">
+        <svg viewBox="0 0 32 32" fill="none" style="width:36px;height:36px"><path d="M6 26V8l10-2 10 2v18H6z" stroke="#b89a6a" stroke-width="1.2" fill="none"/><path d="M6 26h20" stroke="#b89a6a" stroke-width="1.2"/><path d="M13 26V16h6v10" stroke="#b89a6a" stroke-width="1"/></svg>
+        <div><div class="mobile-logo-text">lyffin</div><div class="mobile-logo-sub">Ops</div></div>
+      </div>
+      <div class="form-title">Sign in</div>
+    <div class="form-sub">Use your Lyffin team account</div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="you@lyffin.com" autocomplete="email">
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <button class="btn-signin" id="btn-signin" onclick="handleSignIn()">
+      Sign in
+    </button>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="form-footer">
+      Access is by invitation only.<br>
+      Contact your admin to get an account.
+    </div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js';
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyC0aoUyBCHn63-WkJnPFbDJLF0x1GFMyxU",
+    authDomain:        "lyffin-platform.firebaseapp.com",
+    projectId:         "lyffin-platform",
+    storageBucket:     "lyffin-platform.firebasestorage.app",
+    messagingSenderId: "618920465280",
+    appId:             "1:618920465280:web:11ba5583ff3f2b778a2765"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  // Role → page map
+  const ROLE_PAGES = {
+    admin:      'dashboard.html',
+    sales:      'dashboard.html',
+    design:     'dashboard.html',
+    supervisor: 'dashboard.html',
+    floor:      'production.html',
+    qc:         'qc.html',
+  };
+
+  // If already signed in, redirect
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const role = await getUserRole(db, user.uid);
+      window.location.href = ROLE_PAGES[role] || 'dashboard.html';
+    }
+  });
+
+  async function getUserRole(db, uid) {
+    const snap = await getDoc(doc(db, 'users', uid));
+    return snap.exists() ? snap.data().role : 'sales';
+  }
+
+  window.handleSignIn = async function () {
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('btn-signin');
+    const err      = document.getElementById('error-msg');
+
+    if (!email || !password) {
+      showError('Please enter your email and password.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-ring"></span>Signing in…';
+    err.classList.remove('show');
+
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const role = await getUserRole(db, cred.user.uid);
+      window.location.href = ROLE_PAGES[role] || 'dashboard.html';
+    } catch (e) {
+      const messages = {
+        'auth/user-not-found':   'No account found with this email.',
+        'auth/wrong-password':   'Incorrect password.',
+        'auth/invalid-email':    'Please enter a valid email address.',
+        'auth/too-many-requests':'Too many attempts. Please try again later.',
+        'auth/invalid-credential': 'Email or password is incorrect.',
+      };
+      showError('Error: ' + e.code + ' — ' + e.message);
+      btn.disabled = false;
+      btn.innerHTML = 'Sign in';
+    }
+  };
+
+  function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  // Allow Enter key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') window.handleSignIn();
+  });
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a1a18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lyffin Ops">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lyffin Ops — Project</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:       #1a1a18;
+    --ink-2:     #4a4a46;
+    --ink-3:     #9a9890;
+    --surface:   #f7f6f2;
+    --surface-2: #eeecea;
+    --border:    #dddbd5;
+    --gold:      #b89a6a;
+    --gold-lt:   rgba(184,154,106,0.12);
+    --white:     #ffffff;
+    --radius:    6px;
+    --sidebar-w: 220px;
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-disp: 'Playfair Display', Georgia, serif;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:wght@500;600&display=swap');
+
+  body { font-family: var(--font-sans); background: var(--surface); color: var(--ink); min-height: 100vh; display: flex; }
+
+  /* SIDEBAR */
+  .sidebar { width: var(--sidebar-w); min-height: 100vh; background: var(--ink); display: flex; flex-direction: column; flex-shrink: 0; position: fixed; left: 0; top: 0; bottom: 0; }
+  .sidebar-logo { padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .sidebar-logo-name { font-family: var(--font-disp); font-size: 18px; font-weight: 600; color: var(--white); }
+  .sidebar-logo-sub { font-size: 10px; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+  .sidebar-nav { flex: 1; padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .nav-section { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.25); letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 10px 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 5px; font-size: 13.5px; color: rgba(255,255,255,0.55); cursor: pointer; text-decoration: none; transition: background 0.12s, color 0.12s; }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+  .nav-item.active { background: rgba(184,154,106,0.18); color: var(--gold); }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .sidebar-user { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 10px; }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(184,154,106,0.25); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--gold); flex-shrink: 0; }
+  .user-name { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.8); }
+  .user-role { font-size: 11px; color: rgba(255,255,255,0.3); text-transform: capitalize; }
+  .btn-signout { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.25); padding: 4px; border-radius: 4px; display: flex; align-items: center; transition: color 0.12s; margin-left: auto; }
+  .btn-signout:hover { color: rgba(255,255,255,0.6); }
+  .btn-signout svg { width: 15px; height: 15px; }
+
+  /* MAIN */
+  .main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+  .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .back-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); cursor: pointer; text-decoration: none; transition: color 0.12s; }
+  .back-btn:hover { color: var(--ink); }
+  .back-btn svg { width: 14px; height: 14px; }
+  .topbar-divider { width: 1px; height: 20px; background: var(--border); }
+  .topbar-project-name { font-family: var(--font-disp); font-size: 17px; font-weight: 500; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn { height: 36px; padding: 0 16px; border-radius: var(--radius); font-size: 13px; font-weight: 500; font-family: var(--font-sans); cursor: pointer; border: none; transition: all 0.12s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--ink); color: var(--white); }
+  .btn-primary:hover { background: #2e2e2a; }
+  .btn-ghost { background: transparent; color: var(--ink-2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface-2); }
+  .btn-danger { background: transparent; color: #c0392b; border: 1px solid #f5c6c6; }
+  .btn-danger:hover { background: #fdf2f2; }
+  .btn svg { width: 14px; height: 14px; }
+
+  .content { padding: 28px 32px; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+
+  /* PROJECT HEADER CARD */
+  .project-header-card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px; }
+  .project-header-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+  .project-title { font-family: var(--font-disp); font-size: 24px; font-weight: 500; margin-bottom: 4px; }
+  .project-order { font-size: 13px; color: var(--ink-3); }
+  .project-meta-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  .meta-item label { font-size: 11px; font-weight: 500; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
+  .meta-item span { font-size: 14px; color: var(--ink); }
+
+  /* STATUS BADGE */
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .badge-structure   { background: #fef3cd; color: #92400e; } .badge-structure::before { background: #d97706; }
+  .badge-polish      { background: #dbeafe; color: #1e40af; } .badge-polish::before { background: #3b82f6; }
+  .badge-upholstery  { background: #e0f2fe; color: #075985; } .badge-upholstery::before { background: #0ea5e9; }
+  .badge-packing     { background: #d1fae5; color: #065f46; } .badge-packing::before { background: #10b981; }
+  .badge-delivered   { background: #dcfce7; color: #14532d; } .badge-delivered::before { background: #22c55e; }
+  .badge-completed   { background: #f0fdf4; color: #166534; } .badge-completed::before { background: #16a34a; }
+  .badge-not-started { background: #f3f4f6; color: #6b7280; } .badge-not-started::before { background: #9ca3af; }
+  .badge-carpentry   { background: #fef3cd; color: #92400e; } .badge-carpentry::before { background: #d97706; }
+
+  /* TABS */
+  .tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .tab { padding: 10px 20px; font-size: 13.5px; font-weight: 500; color: var(--ink-3); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--ink); border-bottom-color: var(--gold); }
+
+  /* SECTION CARD */
+  .section-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .section-header { padding: 14px 20px; border-bottom: 1px solid var(--surface-2); display: flex; align-items: center; justify-content: space-between; }
+  .section-title { font-size: 14px; font-weight: 500; }
+
+  /* ITEMS TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead tr { background: var(--surface); border-bottom: 1px solid var(--border); }
+  th { padding: 9px 16px; text-align: left; font-size: 11px; font-weight: 500; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--surface-2); }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 11px 16px; vertical-align: middle; }
+
+  /* STAGE PILLS */
+  .stage-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+  .sp-done { background: #dcfce7; color: #14532d; }
+  .sp-done::before { content: '✓ '; }
+  .sp-pending { background: #f3f4f6; color: #9ca3af; }
+  .sp-na { background: transparent; color: #d1d5db; font-size: 10px; }
+
+  /* EDIT FORM */
+  .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 20px; }
+  .form-field label { display: block; font-size: 11px; font-weight: 500; color: var(--ink-2); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 5px; }
+  .form-field input, .form-field select, .form-field textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13.5px; font-family: var(--font-sans); color: var(--ink); background: var(--white); outline: none; transition: border-color 0.12s; }
+  .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-lt); }
+  .form-field.full { grid-column: 1 / -1; }
+
+  /* COMPLAINTS IN PROJECT */
+  .complaint-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--surface-2); }
+  .complaint-row:last-child { border-bottom: none; }
+  .complaint-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; flex-shrink: 0; margin-top: 5px; }
+  .complaint-dot.resolved { background: #16a34a; }
+  .complaint-body { flex: 1; }
+  .complaint-product { font-size: 13px; font-weight: 500; }
+  .complaint-details { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .complaint-meta { font-size: 11px; color: var(--ink-3); margin-top: 4px; }
+
+  /* NOTES */
+  .notes-area { padding: 16px 20px; }
+  .notes-area textarea { width: 100%; min-height: 100px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13.5px; font-family: var(--font-sans); color: var(--ink); resize: vertical; outline: none; }
+  .notes-area textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-lt); }
+  .notes-save { margin-top: 10px; }
+
+  /* EMPTY */
+  .empty-small { padding: 24px; text-align: center; font-size: 13px; color: var(--ink-3); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--white); padding: 10px 16px; border-radius: var(--radius); font-size: 13px; z-index: 200; transform: translateY(80px); opacity: 0; transition: all 0.25s ease; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* LOADING */
+  .page-loading { position: fixed; inset: 0; background: var(--surface); display: flex; align-items: center; justify-content: center; z-index: 999; }
+  .spin-lg { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 900px) { .project-meta-grid { grid-template-columns: repeat(3, 1fr); } }
+  
+    .project-meta-grid { grid-template-columns: repeat(2, 1fr); }
+    .edit-grid { grid-template-columns: 1fr; }
+  }
+
+/* Mobile bottom nav */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--ink);
+  height: 60px;
+  z-index: 50;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.bottom-nav-inner {
+  display: flex;
+  height: 100%;
+}
+.bn-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 10px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  transition: color .15s;
+}
+.bn-item.active { color: var(--gold); }
+.bn-item svg { width: 20px; height: 20px; }
+
+}
+
+/* ── MOBILE APP STYLES ── */
+@media (max-width: 700px) {
+  body { font-size: 14px; }
+  .topbar { padding: 0 16px; height: 52px; }
+  .topbar-title { font-size: 16px; }
+  .content { padding: 16px 12px 80px; }
+  .stats-row { grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { padding: 14px 14px; }
+  .stat-value { font-size: 22px; }
+  .stat-label { font-size: 10px; }
+  .table-wrap { border-radius: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 500px; }
+  .filters { gap: 8px; }
+  .search-box { max-width: 100%; }
+  .filter-select { font-size: 12px; height: 34px; }
+  .btn { height: 38px; font-size: 12px; padding: 0 12px; }
+  .project-card { border-radius: 8px; }
+  .project-name { font-size: 14px; }
+  .project-meta { font-size: 11px; }
+  .progress-bar-bg { width: 80px; }
+  .section-card { border-radius: 8px; }
+  /* Production mobile */
+  .items-table th, .items-table td { padding: 10px 12px; }
+  .stages { gap: 4px; }
+  .sp { padding: 5px 10px; font-size: 11px; }
+  /* Make tap targets bigger */
+  .sp, .btn, .nav-item, .tab { min-height: 40px; }
+  /* Remove hover effects on touch */
+  .sp:hover { transform: none; }
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--ink);
+  height: 64px;
+  z-index: 50;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav-inner { display: flex; height: 100%; align-items: stretch; width: 100%; justify-content: space-around; }
+.bn-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px; text-decoration: none;
+  color: rgba(255,255,255,0.35); font-size: 9px; font-weight: 500;
+  font-family: var(--font-sans); letter-spacing: 0.03em; text-transform: uppercase;
+  cursor: pointer; border: none; background: none; transition: color .15s; padding: 0;
+}
+.bn-item.active { color: var(--gold); }
+.bn-item svg { width: 22px; height: 22px; }
+@media (max-width: 700px) {
+  .sidebar { display: none !important; }
+  .main { margin-left: 0 !important; }
+  .content { padding-bottom: 80px !important; }
+  .bottom-nav { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-loading" id="page-loading"><div class="spin-lg"></div></div>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-name">lyffin</div>
+    <div class="sidebar-logo-sub">Ops Platform</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Workspace</div>
+    <a class="nav-item active" href="dashboard.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Projects
+    </a>
+    <a class="nav-item" href="production.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/><path d="M2 12h12"/></svg>
+      Production
+    </a>
+    <a class="nav-item" href="qc.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4L2 5h4z"/></svg>
+      QC & Complaints
+    </a>
+    <div class="nav-section" id="nav-admin-section" style="display:none">Admin</div>
+    <a class="nav-item" href="admin.html" id="nav-admin" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Admin dashboard
+    </a>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="user-avatar">?</div>
+    <div>
+      <div class="user-name" id="user-name">Loading…</div>
+      <div class="user-role" id="user-role">—</div>
+    </div>
+    <button class="btn-signout" onclick="signOut()" title="Sign out">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M11 11l4-4-4-4"/><path d="M15 8H6"/><path d="M6 14H2a1 1 0 01-1-1V3a1 1 0 011-1h4"/></svg>
+    </button>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <a class="back-btn" href="dashboard.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 4L6 8l4 4"/></svg>
+        Projects
+      </a>
+      <div class="topbar-divider"></div>
+      <div class="topbar-project-name" id="topbar-name">Loading…</div>
+    </div>
+    <div class="topbar-actions" id="topbar-actions"></div>
+  </div>
+
+  <div class="content" id="main-content">
+    <div class="empty-small">Loading project…</div>
+  </div>
+</div>
+
+<!-- Delivery Modal -->
+<div class="modal-backdrop" id="modal-delivery">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Mark as delivered</div>
+      <button class="modal-close" onclick="closeModal('modal-delivery')">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="16" y2="16"/><line x1="16" y1="2" x2="2" y2="16"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Delivery date</label>
+          <input type="date" id="d-date">
+        </div>
+        <div class="form-field">
+          <label>Delivered by</label>
+          <input type="text" id="d-by" placeholder="Name">
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Delivery notes</label>
+        <textarea id="d-notes" placeholder="Any notes about the delivery..." style="min-height:70px"></textarea>
+      </div>
+      <div class="form-field">
+        <label>Final status</label>
+        <select id="d-status">
+          <option value="Delivered">Delivered — pending sign-off</option>
+          <option value="Completed">Completed — fully signed off</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-delivery')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmDelivery()" style="background:#16a34a;border-color:#16a34a">Confirm delivery</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js';
+  import {
+    getFirestore, doc, getDoc, updateDoc, deleteDoc, collection,
+    getDocs, query, where, serverTimestamp, orderBy
+  } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyC0aoUyBCHn63-WkJnPFbDJLF0x1GFMyxU",
+    authDomain:        "lyffin-platform.firebaseapp.com",
+    projectId:         "lyffin-platform",
+    storageBucket:     "lyffin-platform.firebasestorage.app",
+    messagingSenderId: "618920465280",
+    appId:             "1:618920465280:web:11ba5583ff3f2b778a2765"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  // Get project ID from URL
+  const params = new URLSearchParams(window.location.search);
+  const projectId = params.get('id');
+  if (!projectId) window.location.href = 'dashboard.html';
+
+  let currentRole = null;
+  let currentUser = null;
+  let project = null;
+  let items = [];
+  let complaints = [];
+  let activeTab = 'overview';
+
+  // ── AUTH ──────────────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUser = user;
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    const data = snap.exists() ? snap.data() : {};
+    currentRole = data.role || 'floor'; // default to floor not sales to avoid wrong redirects
+    const name = data.name || user.email.split('@')[0];
+    document.getElementById('user-name').textContent = name;
+    document.getElementById('user-role').textContent = currentRole;
+    document.getElementById('user-avatar').textContent = name.substring(0,2).toUpperCase();
+    if (currentRole === 'admin') {
+      document.getElementById('nav-admin-section').style.display = 'block';
+      document.getElementById('nav-admin').style.display = 'flex';
+      const bnA = document.getElementById('bn-admin');
+      if (bnA) bnA.style.display = 'flex';
+    }
+    loadProject();
+  });
+
+  // ── LOAD PROJECT ──────────────────────────────────────────────────────────
+  async function loadProject() {
+    try {
+      const [projSnap, itemsSnap, complSnap] = await Promise.all([
+        getDoc(doc(db, 'projects', projectId)),
+        getDocs(collection(db, 'projects', projectId, 'items')),
+        getDocs(query(collection(db, 'complaints'), where('projectId', '==', projectId))),
+      ]);
+
+      if (!projSnap.exists()) { window.location.href = 'dashboard.html'; return; }
+
+      project = { id: projSnap.id, ...projSnap.data() };
+      items = itemsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      complaints = complSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Sales staff: only see their assigned projects
+      // Only redirect if role is explicitly 'sales' (not default fallback)
+      if (currentRole === 'sales' && currentUser) {
+        const userData2 = (await getDoc(doc(db, 'users', currentUser.uid))).data() || {};
+        if (userData2.role === 'sales') {
+          const userName = document.getElementById('user-name').textContent;
+          const isAssigned = project.assigneeUid === currentUser.uid ||
+            project.assignee === userName ||
+            !project.assignee;
+          if (!isAssigned) {
+            window.location.href = 'dashboard.html';
+            return;
+          }
+        }
+      }
+
+      document.getElementById('topbar-name').textContent = project.projectName || '—';
+      document.title = `${project.projectName || 'Project'} — Lyffin Ops`;
+
+      renderTopbarActions();
+      renderContent();
+      document.getElementById('page-loading').style.display = 'none';
+    } catch(e) {
+      console.error(e);
+      showToast('Error loading project');
+    }
+  }
+
+  function renderTopbarActions() {
+    const canEdit = ['admin','sales','design','supervisor'].includes(currentRole);
+    const canDeliver = ['admin','supervisor'].includes(currentRole);
+    const isReady = project.status === 'Packing' || project.status === 'Ready';
+    const isDelivered = project.status === 'Delivered' || project.status === 'Completed';
+
+    let html = '';
+    if (currentRole === 'admin') {
+      html += `<button class="btn btn-danger" onclick="deleteProject()" style="margin-right:4px">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10"/></svg>
+        Delete
+      </button>`;
+    }
+    if (canEdit) {
+      html += `<button class="btn btn-ghost" onclick="switchTab('edit', document.querySelectorAll('.tab')[2])">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M11 2l3 3-8 8H3v-3L11 2z"/></svg>
+        Edit
+      </button>`;
+    }
+    if (canDeliver && isReady && !isDelivered) {
+      html += `<button class="btn btn-primary" onclick="openDeliveryModal()" style="background:#16a34a;border-color:#16a34a">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 8l4 4 8-8"/></svg>
+        Mark delivered
+      </button>`;
+    }
+    if (isDelivered) {
+      html += `<span style="font-size:13px;color:#16a34a;font-weight:500;display:flex;align-items:center;gap:5px">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" style="width:14px;height:14px"><path d="M2 8l4 4 8-8"/></svg>
+        Delivered ${project.deliveredDate ? '· ' + formatDate(project.deliveredDate) : ''}
+      </span>`;
+    }
+    document.getElementById('topbar-actions').innerHTML = html;
+  }
+
+  // ── RENDER ALL ────────────────────────────────────────────────────────────
+  function renderContent() {
+    const statusClass = 'badge-' + (project.status || 'not-started').toLowerCase().replace(/\s+/g,'-');
+    const content = document.getElementById('main-content');
+
+    content.innerHTML = `
+      <!-- Project header -->
+      <div class="project-header-card">
+        <div class="project-header-top">
+          <div>
+            <div class="project-title">${esc(project.projectName || '—')}</div>
+            <div class="project-order">Order #${esc(project.orderNo || '—')} · Created ${formatDate(project.orderDate)}</div>
+          </div>
+          <span class="badge ${statusClass}">${project.status || 'Not started'}</span>
+        </div>
+        <div class="project-meta-grid">
+          <div class="meta-item"><label>Location</label><span>${esc(project.location || '—')}</span></div>
+          <div class="meta-item"><label>Assignee</label><span>${esc(project.assignee || '—')}</span></div>
+          <div class="meta-item"><label>Handover</label><span>${formatDate(project.handoverDate)}</span></div>
+          <div class="meta-item"><label>Contact</label><span>${esc(project.contactNo || '—')}</span></div>
+          <div class="meta-item"><label>Fabric</label><span>${esc(project.fabricStatus || 'Not selected')}</span></div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs" id="tabs-container">
+        <div class="tab active" onclick="switchTab('overview', this)">Overview</div>
+        <div class="tab" onclick="switchTab('items', this)">Production items (${items.length})</div>
+        <div class="tab" onclick="switchTab('edit', this)">Edit project</div>
+        <div class="tab" onclick="switchTab('complaints', this)">Complaints (${complaints.length})</div>
+        <div class="tab" onclick="switchTab('notes', this)">Notes</div>
+      </div>
+
+      <!-- Tab content -->
+      <div id="tab-content"></div>
+    `;
+
+    renderTab('overview');
+  }
+
+  window.switchTab = function(tab, el) {
+    activeTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+    renderTab(tab);
+  };
+
+  function renderTab(tab) {
+    const el = document.getElementById('tab-content');
+    if (tab === 'overview')    el.innerHTML = renderOverview();
+    if (tab === 'items')       el.innerHTML = renderItems();
+    if (tab === 'edit')        el.innerHTML = renderEdit();
+    if (tab === 'complaints')  el.innerHTML = renderComplaints();
+    if (tab === 'notes')       el.innerHTML = renderNotes();
+    if (tab === 'supervisor')  el.innerHTML = renderSupervisor();
+  }
+
+  // ── OVERVIEW TAB ──────────────────────────────────────────────────────────
+  function renderOverview() {
+    const totalItems = items.length;
+    const readyItems = items.filter(i => i.overallStatus === 'Ready').length;
+    const openComplaints = complaints.filter(c => c.status !== 'Resolved').length;
+    const pct = totalItems ? Math.round(readyItems / totalItems * 100) : 0;
+
+    return `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px">
+        <div class="section-card" style="padding:18px 20px">
+          <div style="font-size:11px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Items in production</div>
+          <div style="font-size:28px;font-weight:500">${totalItems}</div>
+          <div style="font-size:12px;color:var(--ink-3);margin-top:3px">${readyItems} ready · ${totalItems - readyItems} pending</div>
+        </div>
+        <div class="section-card" style="padding:18px 20px">
+          <div style="font-size:11px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Progress</div>
+          <div style="font-size:28px;font-weight:500">${pct}%</div>
+          <div style="height:4px;background:var(--surface-2);border-radius:2px;margin-top:8px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--gold);border-radius:2px;transition:width .4s"></div></div>
+        </div>
+        <div class="section-card" style="padding:18px 20px">
+          <div style="font-size:11px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Open complaints</div>
+          <div style="font-size:28px;font-weight:500;color:${openComplaints > 0 ? '#c0392b' : 'var(--ink)'}">${openComplaints}</div>
+          <div style="font-size:12px;color:var(--ink-3);margin-top:3px">${complaints.length} total logged</div>
+        </div>
+      </div>
+
+      ${project.notes ? `
+      <div class="section-card">
+        <div class="section-header"><div class="section-title">Notes</div></div>
+        <div style="padding:16px 20px;font-size:13.5px;color:var(--ink-2);line-height:1.6">${esc(project.notes)}</div>
+      </div>` : ''}
+    `;
+  }
+
+  // ── ITEMS TAB ─────────────────────────────────────────────────────────────
+  function renderItems() {
+    if (!items.length) return `<div class="section-card"><div class="empty-small">No items pushed from Factory Listing Tool yet.</div></div>`;
+
+    const STAGES = ['carpentry','polish','upholstery','packing'];
+    const LABELS = { carpentry:'Structure', polish:'Polish', upholstery:'Upholstery', packing:'Packing' };
+
+    return `
+      <div class="section-card">
+        <table>
+          <thead><tr>
+            <th>#</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Area</th>
+            <th>Dimensions</th>
+            <th>Structure</th>
+            <th>Polish</th>
+            <th>Upholstery</th>
+            <th>Packing</th>
+            <th>Status</th>
+          </tr></thead>
+          <tbody>${items.map((item, i) => {
+            const statusClass = 'badge-' + (item.overallStatus || 'structure').toLowerCase().replace(/\s+/g,'-');
+            return `<tr>
+              <td style="color:var(--ink-3);font-size:12px">${i+1}</td>
+              <td><strong>${esc(item.name||'—')}</strong></td>
+              <td>${item.qty||1}</td>
+              <td style="font-size:12px;color:var(--ink-3)">${esc(item.area||'—')}</td>
+              <td style="font-size:12px;color:var(--ink-3)">${esc(item.dimensions||'—')}</td>
+${(function(){
+                return STAGES.map(function(s){
+                  const st = item[s+'Status'];
+                  const lbl = LABELS[s];
+                  if(st==='na') return '<td><span class="stage-pill sp-na">N/A</span></td>';
+                  if(st==='done') return '<td><span class="stage-pill sp-done">'+lbl+'</span></td>';
+                  return '<td><span class="stage-pill sp-pending">'+lbl+'</span></td>';
+                }).join('');
+              })()}
+              <td><span class="badge ${statusClass}" style="font-size:11px">${item.overallStatus||'Structure'}</span></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>`;
+  }
+
+  // ── EDIT TAB ──────────────────────────────────────────────────────────────
+  function renderEdit() {
+    const canEdit = ['admin','sales','design','supervisor'].includes(currentRole);
+    if (!canEdit) return `<div class="section-card"><div class="empty-small">You don't have permission to edit projects.</div></div>`;
+
+    return `
+      <div class="section-card">
+        <div class="section-header"><div class="section-title">Edit project details</div></div>
+        <div class="edit-grid">
+          <div class="form-field">
+            <label>Project name</label>
+            <input type="text" id="e-name" value="${esc(project.projectName||'')}">
+          </div>
+          <div class="form-field">
+            <label>Order number</label>
+            <input type="text" id="e-order" value="${esc(project.orderNo||'')}">
+          </div>
+          <div class="form-field">
+            <label>Location</label>
+            <input type="text" id="e-location" value="${esc(project.location||'')}">
+          </div>
+          <div class="form-field">
+            <label>Handover date</label>
+            <input type="date" id="e-handover" value="${project.handoverDate||''}">
+          </div>
+          <div class="form-field">
+            <label>Assignee</label>
+            <select id="e-assignee">
+              ${['Shamil','Shahzad','Sharon','Danish'].map(a =>
+                `<option ${project.assignee===a?'selected':''}>${a}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Status</label>
+            <select id="e-status">
+              ${['Not Started','Structure','Polish','Upholstery','Packing','Delivered','Completed'].map(s =>
+                `<option ${project.status===s?'selected':''}>${s}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Contact number</label>
+            <input type="text" id="e-contact" value="${esc(project.contactNo||'')}">
+          </div>
+          <div class="form-field">
+            <label>Fabric status</label>
+            <select id="e-fabric">
+              ${['Not Selected','Fabric List Shared','Selected','Fabric Delivered'].map(f =>
+                `<option ${project.fabricStatus===f?'selected':''}>${f}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Delivery status</label>
+            <select id="e-delivery">
+              ${['Ongoing','Completed'].map(d =>
+                `<option ${project.deliveryStatus===d?'selected':''}>${d}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="form-field full" style="display:flex;justify-content:flex-end;gap:10px;padding-top:4px">
+            <button class="btn btn-ghost" onclick="switchTab('overview', document.querySelector('.tab'))">Cancel</button>
+            <button class="btn btn-primary" onclick="saveEdit()">Save changes</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  window.saveEdit = async function() {
+    try {
+      const updates = {
+        projectName:    document.getElementById('e-name').value.trim(),
+        orderNo:        document.getElementById('e-order').value.trim(),
+        location:       document.getElementById('e-location').value.trim(),
+        handoverDate:   document.getElementById('e-handover').value,
+        assignee:       document.getElementById('e-assignee').value,
+        status:         document.getElementById('e-status').value,
+        contactNo:      document.getElementById('e-contact').value.trim(),
+        fabricStatus:   document.getElementById('e-fabric').value,
+        deliveryStatus: document.getElementById('e-delivery').value,
+        updatedAt:      serverTimestamp(),
+      };
+      await updateDoc(doc(db, 'projects', projectId), updates);
+      Object.assign(project, updates);
+      showToast('Project updated');
+      renderContent();
+    } catch(e) { showToast('Error: ' + e.message); }
+  };
+
+  // ── COMPLAINTS TAB ────────────────────────────────────────────────────────
+  function renderComplaints() {
+    if (!complaints.length) return `
+      <div class="section-card">
+        <div class="empty-small">No complaints for this project yet.<br>
+        <a href="qc.html" style="color:var(--gold);text-decoration:none;font-size:13px">Log a complaint →</a></div>
+      </div>`;
+
+    return `
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">Complaints (${complaints.length})</div>
+          <a href="qc.html" style="font-size:12px;color:var(--gold);text-decoration:none">+ New complaint</a>
+        </div>
+        ${complaints.map(c => {
+          const isResolved = c.status === 'Resolved';
+          return `<div class="complaint-row">
+            <div class="complaint-dot ${isResolved?'resolved':''}"></div>
+            <div class="complaint-body">
+              <div class="complaint-product">${esc(c.productName||'—')}</div>
+              <div class="complaint-details">${esc(c.details||'—')}</div>
+              <div class="complaint-meta">${esc(c.rootCause||'')} · Assignee: ${esc(c.assignee||'—')} · ${c.status||'Pending'}</div>
+            </div>
+            <div style="font-size:11px;color:var(--ink-3);flex-shrink:0">${formatDate(c.complaintDate)}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  // ── SUPERVISOR TAB ───────────────────────────────────────────────────────────
+  function renderSupervisor() {
+    const STAGES = ['carpentry','polish','upholstery','packing'];
+    const LABELS = {carpentry:'Structure',polish:'Polish',upholstery:'Upholstery',packing:'Packing'};
+    const COLORS = {carpentry:'#d97706',polish:'#3b82f6',upholstery:'#0ea5e9',packing:'#10b981'};
+
+    if (!items.length) return '<div class="section-card"><div class="empty-small">No items pushed yet.</div></div>';
+
+    // Stage summary
+    const stageSummary = STAGES.map(stage => {
+      const valid = items.filter(i => i[stage + 'Status'] !== 'na');
+      const done = valid.filter(i => i[stage + 'Status'] === 'done').length;
+      return {stage, label: LABELS[stage], total: valid.length, done, color: COLORS[stage]};
+    });
+
+    const summaryHtml = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">' +
+      stageSummary.map(s => {
+        const pct = s.total ? Math.round(s.done / s.total * 100) : 0;
+        return '<div class="section-card" style="padding:14px 16px">' +
+          '<div style="font-size:11px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">' + s.label + '</div>' +
+          '<div style="font-size:22px;font-weight:500;color:' + s.color + '">' + s.done + '/' + s.total + '</div>' +
+          '<div style="height:3px;background:var(--surface-2);border-radius:2px;margin-top:8px;overflow:hidden">' +
+            '<div style="height:100%;width:' + pct + '%;background:' + s.color + ';border-radius:2px"></div>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+
+    // Items checklist
+    const itemRows = items.map(item => {
+      const validStages = STAGES.filter(s => item[s + 'Status'] !== 'na');
+      const stagePills = validStages.map(stage => {
+        const done = item[stage + 'Status'] === 'done';
+        const color = done ? COLORS[stage] : 'var(--border)';
+        const textColor = done ? 'white' : 'var(--ink-3)';
+        return '<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:500;background:' + color + ';color:' + textColor + '">' +
+          (done ? '&#10003; ' : '') + LABELS[stage] + '</span>';
+      }).join('');
+      const isReady = item.overallStatus === 'Ready';
+      return '<tr style="background:' + (isReady ? '#f0fdf4' : 'transparent') + '">' +
+        '<td style="padding:10px 16px;font-weight:500">' + esc(item.name||'—') + '</td>' +
+        '<td style="padding:10px 16px;font-size:12px;color:var(--ink-3)">Qty: ' + (item.qty||1) + (item.area ? ' · ' + esc(item.area) : '') + '</td>' +
+        '<td style="padding:10px 16px"><div style="display:flex;gap:4px;flex-wrap:wrap">' + stagePills + '</div></td>' +
+        '<td style="padding:10px 16px;text-align:center">' + (isReady ? '<span style="color:#16a34a;font-weight:500;font-size:13px">&#10003; Ready</span>' : '<span style="color:var(--ink-3);font-size:12px">In progress</span>') + '</td>' +
+      '</tr>';
+    }).join('');
+
+    return summaryHtml +
+      '<div class="section-card">' +
+        '<div class="section-header"><div class="section-title">Item checklist</div></div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:13.5px">' +
+          '<thead><tr style="background:var(--surface);border-bottom:1px solid var(--border)">' +
+            '<th style="padding:9px 16px;text-align:left;font-size:11px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em">Product</th>' +
+            '<th style="padding:9px 16px;text-align:left;font-size:11px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em">Details</th>' +
+            '<th style="padding:9px 16px;text-align:left;font-size:11px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em">Stages</th>' +
+            '<th style="padding:9px 16px;text-align:center;font-size:11px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em">Status</th>' +
+          '</tr></thead>' +
+          '<tbody>' + itemRows + '</tbody>' +
+        '</table>' +
+      '</div>';
+  }
+
+  // ── NOTES TAB ─────────────────────────────────────────────────────────────
+  function renderNotes() {
+    return `
+      <div class="section-card">
+        <div class="section-header"><div class="section-title">Project notes</div></div>
+        <div class="notes-area">
+          <textarea id="notes-input" placeholder="Add notes about this project…">${esc(project.notes||'')}</textarea>
+          <div class="notes-save">
+            <button class="btn btn-primary" onclick="saveNotes()">Save notes</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  window.saveNotes = async function() {
+    const notes = document.getElementById('notes-input').value.trim();
+    try {
+      await updateDoc(doc(db, 'projects', projectId), { notes, updatedAt: serverTimestamp() });
+      project.notes = notes;
+      showToast('Notes saved');
+    } catch(e) { showToast('Error: ' + e.message); }
+  };
+
+  // ── HELPERS ───────────────────────────────────────────────────────────────
+  window.openDeliveryModal = function() {
+    document.getElementById('d-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('d-by').value = document.getElementById('user-name').textContent;
+    document.getElementById('modal-delivery').classList.add('open');
+  };
+
+  window.confirmDelivery = async function() {
+    const deliveryDate = document.getElementById('d-date').value;
+    const deliveredBy  = document.getElementById('d-by').value.trim();
+    const notes        = document.getElementById('d-notes').value.trim();
+    const status       = document.getElementById('d-status').value;
+    if (!deliveryDate) { showToast('Please enter delivery date'); return; }
+    try {
+      await updateDoc(doc(db, 'projects', projectId), {
+        status,
+        deliveryStatus:  'Completed',
+        deliveredDate:   deliveryDate,
+        deliveredBy,
+        deliveryNotes:   notes,
+        updatedAt:       serverTimestamp(),
+      });
+      Object.assign(project, { status, deliveredDate: deliveryDate, deliveredBy, deliveryNotes: notes });
+      closeModal('modal-delivery');
+      showToast('Project marked as ' + status);
+      renderContent();
+    } catch(e) { showToast('Error: ' + e.message); }
+  };
+
+  window.deleteProject = async function() {
+    if (!confirm('Delete ' + (project.projectName||'this project') + '? This will permanently delete the project and all its production items. This cannot be undone.')) return;
+    try {
+      // Delete all items in subcollection first
+      const itemsSnap = await getDocs(collection(db, 'projects', projectId, 'items'));
+      const batch = [];
+      itemsSnap.docs.forEach(d => {
+        batch.push(deleteDoc(doc(db, 'projects', projectId, 'items', d.id)));
+      });
+      await Promise.all(batch);
+      // Delete the project
+      await deleteDoc(doc(db, 'projects', projectId));
+      showToast('Project deleted');
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+    } catch(e) {
+      showToast('Error: ' + e.message);
+    }
+  };
+
+  window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
+
+  window.signOut = async function() { await fbSignOut(auth); window.location.href = 'login.html'; };
+
+  function formatDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  function esc(s) {
+    return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+</script>
+
+
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a class="bn-item active" href="dashboard.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Projects
+    </a>
+    <a class="bn-item" href="production.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/><path d="M2 12h12"/></svg>
+      Factory
+    </a>
+    <a class="bn-item" href="qc.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4L2 5h4z"/></svg>
+      QC
+    </a>
+    <a class="bn-item" href="admin.html" id="bn-admin" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="14" height="10" rx="1"/><path d="M5 15h6M8 11v4"/></svg>
+      Admin
+    </a>
+    <a class="bn-item" href="account.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Account
+    </a>
+  </div>
+</div>
+</body>
+</html>

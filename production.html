@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a1a18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lyffin Ops">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lyffin Ops — Production</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#1a1a18;--ink-2:#4a4a46;--ink-3:#9a9890;--surface:#f7f6f2;--surface-2:#eeecea;--border:#dddbd5;--gold:#b89a6a;--white:#ffffff;--radius:6px;--sidebar-w:220px;--font-sans:'Inter',system-ui,sans-serif;--font-disp:'Playfair Display',Georgia,serif}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:wght@500;600&display=swap');
+body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min-height:100vh;display:flex}
+.sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--ink);display:flex;flex-direction:column;flex-shrink:0;position:fixed;left:0;top:0;bottom:0}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.sidebar-logo-name{font-family:var(--font-disp);font-size:18px;font-weight:600;color:var(--white)}
+.sidebar-logo-sub{font-size:10px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.sidebar-nav{flex:1;padding:16px 10px;display:flex;flex-direction:column;gap:2px}
+.nav-section{font-size:10px;font-weight:500;color:rgba(255,255,255,0.25);letter-spacing:.1em;text-transform:uppercase;padding:12px 10px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:5px;font-size:13.5px;color:rgba(255,255,255,0.55);cursor:pointer;text-decoration:none;transition:background .12s,color .12s}
+.nav-item:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.85)}
+.nav-item.active{background:rgba(184,154,106,0.18);color:var(--gold)}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-user{padding:16px 20px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:rgba(184,154,106,0.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--gold);flex-shrink:0}
+.user-name{font-size:13px;font-weight:500;color:rgba(255,255,255,0.8)}
+.user-role{font-size:11px;color:rgba(255,255,255,0.3);text-transform:capitalize}
+.btn-signout{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.25);padding:4px;border-radius:4px;display:flex;align-items:center;transition:color .12s;margin-left:auto}
+.btn-signout:hover{color:rgba(255,255,255,0.6)}
+.btn-signout svg{width:15px;height:15px}
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-title{font-family:var(--font-disp);font-size:18px;font-weight:500}
+.filter-select{height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font-sans);color:var(--ink-2);background:var(--white);cursor:pointer;outline:none}
+.content{padding:28px 32px;flex:1}
+.projects-grid{display:flex;flex-direction:column;gap:20px}
+.project-card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.project-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--surface-2)}
+.project-name{font-weight:500;font-size:15px}
+.project-meta{font-size:12px;color:var(--ink-3);margin-top:2px}
+.progress-wrap{display:flex;align-items:center;gap:10px}
+.progress-bar-bg{width:120px;height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.progress-bar-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s}
+.progress-text{font-size:12px;color:var(--ink-3);white-space:nowrap}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:500}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.badge-structure{background:#fef3cd;color:#92400e}.badge-structure::before{background:#d97706}
+.badge-polish{background:#dbeafe;color:#1e40af}.badge-polish::before{background:#3b82f6}
+.badge-packing{background:#d1fae5;color:#065f46}.badge-packing::before{background:#10b981}
+.badge-ready{background:#dcfce7;color:#14532d}.badge-ready::before{background:#22c55e}
+.badge-carpentry{background:#fef3cd;color:#92400e}.badge-carpentry::before{background:#d97706}
+.items-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.items-table th{padding:9px 16px;text-align:left;font-size:11px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;background:var(--surface);border-bottom:1px solid var(--border)}
+.items-table td{padding:12px 16px;border-bottom:1px solid var(--surface-2);vertical-align:middle}
+.items-table tr:last-child td{border-bottom:none}
+.item-name{font-weight:500;font-size:14px}
+.item-meta{font-size:12px;color:var(--ink-3);margin-top:2px}
+.stages{display:flex;gap:6px;flex-wrap:wrap}
+.sp{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:20px;font-size:12px;font-weight:500;font-family:var(--font-sans);cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--ink-3);transition:all .15s;white-space:nowrap}
+.sp:hover{border-color:var(--ink-3);color:var(--ink-2)}
+.sp:active{transform:scale(0.97)}
+.sp:disabled{cursor:not-allowed;opacity:0.6}
+.sp.done-carpentry,.sp.done-structure{background:#fef3cd;color:#92400e;border-color:#d97706}
+.sp.done-polish{background:#dbeafe;color:#1e40af;border-color:#3b82f6}
+.sp.done-upholstery{background:#e0f2fe;color:#075985;border-color:#0ea5e9}
+.sp.done-packing{background:#d1fae5;color:#065f46;border-color:#10b981}
+.sp.done-ready{background:#dcfce7;color:#14532d;border-color:#22c55e}
+.overall-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:500}
+.overall-badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.ob-structure{background:#fef3cd;color:#92400e}.ob-structure::before{background:#d97706}
+.ob-polish{background:#dbeafe;color:#1e40af}.ob-polish::before{background:#3b82f6}
+.ob-upholstery{background:#e0f2fe;color:#075985}.ob-upholstery::before{background:#0ea5e9}
+.ob-packing{background:#d1fae5;color:#065f46}.ob-packing::before{background:#10b981}
+.ob-ready{background:#dcfce7;color:#14532d}.ob-ready::before{background:#22c55e}
+.empty-state{text-align:center;padding:60px 32px;color:var(--ink-3);font-size:14px}
+.page-loading{position:fixed;inset:0;background:var(--surface);display:flex;align-items:center;justify-content:center;z-index:999}
+.spin-lg{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.chevron{width:16px;height:16px;transition:transform .2s;flex-shrink:0;color:var(--ink-3)}
+.chevron.open{transform:rotate(180deg)}
+.items-wrap{display:none}
+.items-wrap.open{display:block}
+.project-header{cursor:pointer;transition:background .1s}
+.project-header:hover{background:var(--surface)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--white);padding:10px 16px;border-radius:var(--radius);font-size:13px;z-index:200;transform:translateY(80px);opacity:0;transition:all .25s ease}
+.toast.show{transform:translateY(0);opacity:1}
+@media(max-width:700px){.sidebar{display:none}.main{margin-left:0}.content{padding:16px}.topbar{padding:0 16px}}
+
+/* Mobile bottom nav */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--ink);
+  height: 60px;
+  z-index: 50;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.bottom-nav-inner {
+  display: flex;
+  height: 100%;
+}
+.bn-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 10px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  transition: color .15s;
+}
+.bn-item.active { color: var(--gold); }
+.bn-item svg { width: 20px; height: 20px; }
+
+}
+
+/* ── MOBILE APP STYLES ── */
+@media (max-width: 700px) {
+  body { font-size: 14px; }
+  .topbar { padding: 0 16px; height: 52px; }
+  .topbar-title { font-size: 16px; }
+  .content { padding: 16px 12px 80px; }
+  .stats-row { grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { padding: 14px 14px; }
+  .stat-value { font-size: 22px; }
+  .stat-label { font-size: 10px; }
+  .table-wrap { border-radius: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 500px; }
+  .filters { gap: 8px; }
+  .search-box { max-width: 100%; }
+  .filter-select { font-size: 12px; height: 34px; }
+  .btn { height: 38px; font-size: 12px; padding: 0 12px; }
+  .project-card { border-radius: 8px; }
+  .project-name { font-size: 14px; }
+  .project-meta { font-size: 11px; }
+  .progress-bar-bg { width: 80px; }
+  .section-card { border-radius: 8px; }
+  /* Production mobile */
+  .items-table th, .items-table td { padding: 10px 12px; }
+  .stages { gap: 4px; }
+  .sp { padding: 5px 10px; font-size: 11px; }
+  /* Make tap targets bigger */
+  .sp, .btn, .nav-item, .tab { min-height: 40px; }
+  /* Remove hover effects on touch */
+  .sp:hover { transform: none; }
+}
+
+@media (max-width: 700px) {
+  .items-table { min-width: unset; width: 100%; }
+  .items-table thead { display: none; }
+  .items-table tbody tr { display: flex; flex-direction: column; padding: 12px 16px; border-bottom: 1px solid var(--surface-2); gap: 8px; }
+  .items-table td { padding: 0; border: none; }
+  .stages { gap: 6px; flex-wrap: wrap; }
+  .sp { padding: 7px 12px; font-size: 12px; }
+  .overall-badge { align-self: flex-start; }
+  .project-header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px 16px; }
+  .progress-wrap { width: 100%; justify-content: space-between; }
+  .progress-bar-bg { flex: 1; }
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--ink);
+  height: 64px;
+  z-index: 50;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav-inner { display: flex; height: 100%; align-items: stretch; width: 100%; justify-content: space-around; }
+.bn-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px; text-decoration: none;
+  color: rgba(255,255,255,0.35); font-size: 9px; font-weight: 500;
+  font-family: var(--font-sans); letter-spacing: 0.03em; text-transform: uppercase;
+  cursor: pointer; border: none; background: none; transition: color .15s; padding: 0;
+}
+.bn-item.active { color: var(--gold); }
+.bn-item svg { width: 22px; height: 22px; }
+@media (max-width: 700px) {
+  .sidebar { display: none !important; }
+  .main { margin-left: 0 !important; }
+  .content { padding-bottom: 80px !important; }
+  .bottom-nav { display: flex; }
+}
+</style>
+</head>
+<body>
+<div class="page-loading" id="page-loading"><div class="spin-lg"></div></div>
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-name">lyffin</div>
+    <div class="sidebar-logo-sub">Ops Platform</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Workspace</div>
+    <a class="nav-item" href="dashboard.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Projects
+    </a>
+    <a class="nav-item active" href="production.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/><path d="M2 12h12"/></svg>Production
+    </a>
+    <a class="nav-item" href="qc.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4L2 5h4z"/></svg>QC &amp; Complaints
+    </a>
+    <div class="nav-section" id="nav-admin-section" style="display:none">Admin</div>
+    <a class="nav-item" href="admin.html" id="nav-admin" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Admin dashboard
+    </a>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="user-avatar">?</div>
+    <div>
+      <div class="user-name" id="user-name">Loading</div>
+      <div class="user-role" id="user-role">-</div>
+    </div>
+    <button class="btn-signout" onclick="signOut()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M11 11l4-4-4-4"/><path d="M15 8H6"/><path d="M6 14H2a1 1 0 01-1-1V3a1 1 0 011-1h4"/></svg>
+    </button>
+  </div>
+</nav>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Production</div>
+    <select class="filter-select" id="filter-status" onchange="filterProjects()">
+      <option value="">All active projects</option>
+      <option value="Structure">Structure</option>
+      <option value="Polish">Polish</option>
+      <option value="Upholstery">Upholstery</option>
+      <option value="Packing">Packing</option>
+      <option value="Ready">Ready</option>
+    </select>
+  </div>
+  <div class="content">
+    <div class="projects-grid" id="projects-grid">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js';
+import { getFirestore, collection, onSnapshot, query, doc, getDoc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC0aoUyBCHn63-WkJnPFbDJLF0x1GFMyxU",
+  authDomain: "lyffin-platform.firebaseapp.com",
+  projectId: "lyffin-platform",
+  storageBucket: "lyffin-platform.firebasestorage.app",
+  messagingSenderId: "618920465280",
+  appId: "1:618920465280:web:11ba5583ff3f2b778a2765"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const STAGES = ['carpentry','polish','upholstery','packing','ready'];
+const LABELS = {carpentry:'Structure',polish:'Polish',upholstery:'Upholstery',packing:'Packing',ready:'Ready'};
+let allData = [];
+const itemsCache = {};
+
+onAuthStateChanged(auth, async function(user) {
+  if (!user) { window.location.href = 'login.html'; return; }
+  const snap = await getDoc(doc(db, 'users', user.uid));
+  const data = snap.exists() ? snap.data() : {};
+  const name = data.name || user.email.split('@')[0];
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('user-role').textContent = data.role || 'floor';
+  document.getElementById('user-avatar').textContent = name.substring(0,2).toUpperCase();
+  if (data.role === 'admin') {
+    document.getElementById('nav-admin-section').style.display = 'block';
+    document.getElementById('nav-admin').style.display = 'flex';
+    const bnA = document.getElementById('bn-admin');
+    if (bnA) bnA.style.display = 'flex';
+    const bnAdminEl = document.getElementById('bn-admin');
+    if (bnAdminEl) bnAdminEl.style.display = 'flex';
+    const bnAdmin = document.getElementById('bn-admin');
+    if (bnAdmin) bnAdmin.style.display = 'flex';
+  }
+  loadProduction();
+});
+
+function loadProduction() {
+  onSnapshot(query(collection(db, 'projects')), function(snap) {
+    const projects = snap.docs.map(function(d) { return Object.assign({id:d.id}, d.data()); });
+    window._projects = projects;
+    for (let i = 0; i < projects.length; i++) {
+      const proj = projects[i];
+      if (!itemsCache[proj.id]) {
+        itemsCache[proj.id] = [];
+        (function(pid) {
+          onSnapshot(collection(db, 'projects', pid, 'items'), function(iSnap) {
+            itemsCache[pid] = iSnap.docs.map(function(d) { return Object.assign({id:d.id}, d.data()); });
+            rebuild();
+          });
+        })(proj.id);
+      }
+    }
+    rebuild();
+    document.getElementById('page-loading').style.display = 'none';
+  });
+}
+
+function rebuild() {
+  const projects = window._projects || [];
+  allData = projects
+    .map(function(p) { return {project:p, items:itemsCache[p.id]||[]}; })
+    .filter(function(d) { return d.items.length > 0; });
+  render();
+}
+
+function render() {
+  const grid = document.getElementById('projects-grid');
+  const filter = document.getElementById('filter-status').value;
+  const data = filter ? allData.filter(function(d) { return d.project.status === filter; }) : allData;
+  if (!data.length) {
+    grid.innerHTML = '<div class="empty-state">No production projects found. Push a factory listing to get started.</div>';
+    return;
+  }
+  grid.innerHTML = data.map(function(d) { return renderCard(d); }).join('');
+}
+
+function renderCard(d) {
+  const project = d.project;
+  const items = d.items;
+  const total = items.length;
+  const ready = items.filter(function(i) { return i.overallStatus === 'Ready'; }).length;
+  const pct = total ? Math.round(ready / total * 100) : 0;
+  const badgeCls = 'badge-' + (project.status || 'structure').toLowerCase().replace(/\s/g,'');
+  const rows = items.map(function(item) { return renderRow(project.id, item); }).join('');
+  const pid = project.id.replace(/[^a-z0-9]/gi,'_');
+  const isOpen = ready < total;
+  return '<div class="project-card">' +
+    '<div class="project-header" onclick="toggleProject(\'' + pid + '\')" id="ph-' + pid + '">' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<svg class="chevron ' + (isOpen?'open':'') + '" id="chv-' + pid + '" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg>' +
+        '<div>' +
+          '<div class="project-name">' + esc(project.projectName||'') + '</div>' +
+          '<div class="project-meta">' + esc(project.location||'') + ' · ' + total + ' items</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="progress-wrap">' +
+        '<span class="badge ' + badgeCls + '">' + (project.status||'Structure') + '</span>' +
+        '<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '<span class="progress-text">' + ready + '/' + total + ' ready</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="items-wrap ' + (isOpen?'open':'') + '" id="pw-' + pid + '">' +
+      '<table class="items-table">' +
+        '<thead><tr><th>Product</th><th>Stages</th><th>Status</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderRow(projectId, item) {
+  const validStages = STAGES; // show all stages, N/A shown as label
+  let pills = '';
+  for (let i = 0; i < validStages.length; i++) {
+    const stage = validStages[i];
+    const status = item[stage + 'Status'] || 'pending';
+    const isDone = status === 'done';
+    const label = LABELS[stage] || stage;
+    const text = isDone ? ('checkmark ' + label) : label;
+    const cls = isDone ? ('sp done-' + stage) : 'sp';
+    pills += '<button class="' + cls + '" onclick="tap(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)">' + (isDone ? '&#10003; ' : '') + label + '</button>';
+  }
+  const obCls = 'ob-' + (item.overallStatus || 'structure').toLowerCase().replace(/\s/g,'');
+  return '<tr>' +
+    '<td>' +
+      '<div class="item-name">' + esc(item.name||'Unnamed') + '</div>' +
+      '<div class="item-meta">Qty: ' + (item.qty||1) + (item.area ? ' · ' + esc(item.area) : '') + (item.dimensions ? ' · ' + esc(item.dimensions) : '') + '</div>' +
+    '</td>' +
+    '<td><div class="stages">' + pills + '</div></td>' +
+    '<td><span class="overall-badge ' + obCls + '">' + (item.overallStatus||'Structure') + '</span></td>' +
+  '</tr>';
+}
+
+window.markNA = async function(projectId, itemId, stage, btn) {
+  if (btn.disabled) return;
+  if (!confirm('Mark ' + (stage === 'upholstery' ? 'Upholstery' : stage) + ' as N/A for this item?')) return;
+  btn.disabled = true;
+  try {
+    const itemRef = doc(db, 'projects', projectId, 'items', itemId);
+    const snap = await getDoc(itemRef);
+    if (!snap.exists()) { btn.disabled = false; return; }
+    const item = snap.data();
+    const updates = {};
+    updates[stage + 'Status'] = 'na';
+    const valid = STAGES.filter(s => item[s + 'Status'] !== 'na' && s !== stage);
+    const sim = Object.assign({}, item, updates);
+    const firstPending = valid.find(s => (sim[s + 'Status'] || 'pending') === 'pending');
+    updates.overallStatus = firstPending ? LABELS[firstPending] : 'Ready';
+    await updateDoc(itemRef, updates);
+    showToast('Upholstery marked as N/A');
+  } catch(e) { showToast('Error: ' + e.message); }
+  finally { btn.disabled = false; }
+};
+
+window.tap = async function(projectId, itemId, stage, btn) {
+  if (btn.disabled) return;
+  btn.disabled = true;
+  try {
+    const itemRef = doc(db, 'projects', projectId, 'items', itemId);
+    const snap = await getDoc(itemRef);
+    if (!snap.exists()) { showToast('Item not found'); btn.disabled = false; return; }
+    const item = snap.data();
+    const current = item[stage + 'Status'] || 'pending';
+    const next = current === 'done' ? 'pending' : 'done';
+    const updates = {};
+    updates[stage + 'Status'] = next;
+    const valid = STAGES.filter(function(s) { return item[s + 'Status'] !== 'na'; });
+    const sim = Object.assign({}, item, updates);
+    const firstPending = valid.find(function(s) { return (sim[s + 'Status'] || 'pending') === 'pending'; });
+    updates.overallStatus = firstPending ? LABELS[firstPending] : 'Ready';
+    await updateDoc(itemRef, updates);
+    showToast(next === 'done' ? (LABELS[stage] + ' complete') : (LABELS[stage] + ' undone'));
+    const allSnap = await getDocs(collection(db, 'projects', projectId, 'items'));
+    const allReady = allSnap.docs.every(function(d) {
+      const data = d.data();
+      if (d.id === itemId) return updates.overallStatus === 'Ready';
+      return data.overallStatus === 'Ready';
+    });
+    if (allReady) {
+      await updateDoc(doc(db, 'projects', projectId), {status:'Packing'});
+    }
+  } catch(e) {
+    console.error(e);
+    showToast('Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+window.toggleProject = function(pid) {
+  const wrap = document.getElementById('pw-' + pid);
+  const chv = document.getElementById('chv-' + pid);
+  if (!wrap) return;
+  const isOpen = wrap.classList.contains('open');
+  wrap.classList.toggle('open', !isOpen);
+  if (chv) chv.classList.toggle('open', !isOpen);
+};
+
+window.filterProjects = function() { render(); };
+window.signOut = async function() { await fbSignOut(auth); window.location.href = 'login.html'; };
+
+function esc(s) {
+  return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+</script>
+
+
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a class="bn-item" href="dashboard.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Projects
+    </a>
+    <a class="bn-item active" href="production.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 12V6l6-4 6 4v6"/><path d="M6 16v-5h4v5"/><path d="M2 12h12"/></svg>
+      Factory
+    </a>
+    <a class="bn-item" href="qc.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1l2 4h4l-3 3 1 4-4-2-4 2 1-4L2 5h4z"/></svg>
+      QC
+    </a>
+    <a class="bn-item" href="admin.html" id="bn-admin" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="14" height="10" rx="1"/><path d="M5 15h6M8 11v4"/></svg>
+      Admin
+    </a>
+    <a class="bn-item" href="account.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a3 3 0 100 6 3 3 0 000-6z"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Account
+    </a>
+  </div>
+</div>
+</body>
+</html>
