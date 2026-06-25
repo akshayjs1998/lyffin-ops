@@ -1,12 +1,15 @@
-const CACHE = 'lyffin-ops-v1';
+const CACHE = 'lyffin-ops-v2';
 const FILES = [
-  '/login.html',
-  '/dashboard.html',
-  '/production.html',
-  '/qc.html',
-  '/admin.html',
-  '/project.html',
-  '/manifest.json'
+  '/lyffin-ops/login.html',
+  '/lyffin-ops/dashboard.html',
+  '/lyffin-ops/production.html',
+  '/lyffin-ops/qc.html',
+  '/lyffin-ops/admin.html',
+  '/lyffin-ops/project.html',
+  '/lyffin-ops/account.html',
+  '/lyffin-ops/manifest.json',
+  '/lyffin-ops/icon-192.png',
+  '/lyffin-ops/icon-512.png'
 ];
 
 self.addEventListener('install', e => {
