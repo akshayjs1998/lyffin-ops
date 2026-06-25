@@ -526,6 +526,17 @@
     renderTab('overview');
   }
 
+  async function loadEditAssignees() {
+    const sel = document.getElementById('e-assignee');
+    if (!sel || sel.children.length > 1) return;
+    try {
+      const snap = await getDocs(collection(db, 'users'));
+      const users = snap.docs.map(d => d.data()).filter(u => !u.pending);
+      sel.innerHTML = '<option value="">Select...</option>' +
+        users.map(u => '<option ' + (project.assignee === (u.name||u.email) ? 'selected' : '') + '>' + (u.name||u.email) + '</option>').join('');
+    } catch(e) { console.error(e); }
+  }
+
   window.switchTab = function(tab, el) {
     activeTab = tab;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -537,7 +548,7 @@
     const el = document.getElementById('tab-content');
     if (tab === 'overview')    el.innerHTML = renderOverview();
     if (tab === 'items')       el.innerHTML = renderItems();
-    if (tab === 'edit')        el.innerHTML = renderEdit();
+    if (tab === 'edit')        { el.innerHTML = renderEdit(); loadEditAssignees(); }
     if (tab === 'complaints')  el.innerHTML = renderComplaints();
     if (tab === 'notes')       el.innerHTML = renderNotes();
     if (tab === 'supervisor')  el.innerHTML = renderSupervisor();
