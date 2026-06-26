@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Project Status — Lyffin</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#1a1a18;--ink-2:#4a4a46;--ink-3:#9a9890;--surface:#f7f6f2;--surface-2:#eeecea;--border:#dddbd5;--gold:#b89a6a;--gold-lt:rgba(184,154,106,0.12);--white:#ffffff;--radius:6px;--font-sans:'Inter',system-ui,sans-serif;--font-disp:'Playfair Display',Georgia,serif}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:wght@500;600&display=swap');
+body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min-height:100vh}
+.header{background:var(--ink);padding:20px 24px;display:flex;align-items:center;justify-content:space-between}
+.logo-name{font-family:var(--font-disp);font-size:20px;font-weight:600;color:var(--white)}
+.logo-sub{font-size:10px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+.header-right{font-size:12px;color:rgba(255,255,255,0.4);text-align:right}
+.content{max-width:600px;margin:0 auto;padding:32px 20px 48px}
+.card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
+.card-header{padding:20px 24px;border-bottom:1px solid var(--surface-2)}
+.project-title{font-family:var(--font-disp);font-size:22px;font-weight:500;margin-bottom:4px}
+.project-sub{font-size:13px;color:var(--ink-3)}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:20px 24px}
+.meta-item label{font-size:10px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px}
+.meta-item span{font-size:14px;color:var(--ink)}
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500}
+.status-badge::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.s-structure{background:#fef3cd;color:#92400e}.s-structure::before{background:#d97706}
+.s-polish{background:#dbeafe;color:#1e40af}.s-polish::before{background:#3b82f6}
+.s-upholstery{background:#e0f2fe;color:#075985}.s-upholstery::before{background:#0ea5e9}
+.s-packing{background:#d1fae5;color:#065f46}.s-packing::before{background:#10b981}
+.s-delivered{background:#dcfce7;color:#14532d}.s-delivered::before{background:#22c55e}
+.s-completed{background:#f0fdf4;color:#166534}.s-completed::before{background:#16a34a}
+.s-not-started{background:#f3f4f6;color:#6b7280}.s-not-started::before{background:#9ca3af}
+.progress-section{padding:20px 24px}
+.progress-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.progress-label span:first-child{font-size:13px;font-weight:500}
+.progress-label span:last-child{font-size:22px;font-weight:500;color:var(--ink)}
+.progress-bar-bg{height:10px;background:var(--surface-2);border-radius:5px;overflow:hidden;margin-bottom:12px}
+.progress-bar-fill{height:100%;background:var(--gold);border-radius:5px;transition:width .5s ease}
+.stage-pills{display:flex;gap:8px;flex-wrap:wrap}
+.stage-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:16px;font-size:12px;font-weight:500}
+.sp-done{background:#d1fae5;color:#065f46}
+.sp-done::before{content:'✓ '}
+.sp-pending{background:var(--surface-2);color:var(--ink-3)}
+.sp-na{background:transparent;color:#d1d5db;font-size:11px;border:1px solid var(--border)}
+.timeline-section{padding:20px 24px}
+.timeline-title{font-size:12px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+.timeline-item{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.timeline-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.dot-done{background:var(--gold)}
+.dot-pending{background:var(--border)}
+.dot-current{background:var(--gold);box-shadow:0 0 0 3px var(--gold-lt)}
+.timeline-text{flex:1}
+.timeline-stage{font-size:13px;font-weight:500}
+.timeline-sub{font-size:11px;color:var(--ink-3);margin-top:1px}
+.footer{text-align:center;padding:16px;font-size:12px;color:var(--ink-3);border-top:1px solid var(--border);background:var(--white)}
+.loading{text-align:center;padding:80px 24px;color:var(--ink-3)}
+.error-state{text-align:center;padding:80px 24px;color:var(--ink-3)}
+.error-state h2{font-size:18px;margin-bottom:8px;color:var(--ink)}
+.handover-notice{margin:0 24px 20px;padding:12px 16px;border-radius:var(--radius);font-size:13px;font-weight:500}
+.hn-ok{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+.hn-late{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+.hn-soon{background:#fffbeb;color:#b45309;border:1px solid #fde68a}
+@media(max-width:500px){.meta-grid{grid-template-columns:1fr}.content{padding:16px 12px 40px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="logo-name">lyffin</div>
+    <div class="logo-sub">Project Status</div>
+  </div>
+  <div class="header-right">
+    Read-only · For client use<br>
+    <span id="last-updated"></span>
+  </div>
+</div>
+
+<div class="content">
+  <div id="main">
+    <div class="loading">Loading project status…</div>
+  </div>
+</div>
+
+<div class="footer">
+  This page is shared by Lyffin for your reference. For queries, contact your sales representative.
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js';
+import { getFirestore, doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC0aoUyBCHn63-WkJnPFbDJLF0x1GFMyxU",
+  authDomain: "lyffin-platform.firebaseapp.com",
+  projectId: "lyffin-platform",
+  storageBucket: "lyffin-platform.firebasestorage.app",
+  messagingSenderId: "618920465280",
+  appId: "1:618920465280:web:11ba5583ff3f2b778a2765"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+const params = new URLSearchParams(window.location.search);
+const projectId = params.get('id');
+
+if (!projectId) {
+  document.getElementById('main').innerHTML = '<div class="error-state"><h2>No project found</h2><p>This link does not contain a valid project ID.</p></div>';
+} else {
+  loadProject();
+}
+
+async function loadProject() {
+  try {
+    const [projSnap, itemsSnap] = await Promise.all([
+      getDoc(doc(db, 'projects', projectId)),
+      getDocs(collection(db, 'projects', projectId, 'items'))
+    ]);
+
+    if (!projSnap.exists()) {
+      document.getElementById('main').innerHTML = '<div class="error-state"><h2>Project not found</h2><p>This project may have been removed or the link is incorrect.</p></div>';
+      return;
+    }
+
+    const project = { id: projSnap.id, ...projSnap.data() };
+    const items = itemsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+    document.title = (project.projectName || 'Project') + ' — Lyffin Status';
+
+    renderProject(project, items);
+  } catch(e) {
+    document.getElementById('main').innerHTML = '<div class="error-state"><h2>Error loading project</h2><p>' + esc(e.message) + '</p></div>';
+  }
+}
+
+function renderProject(project, items) {
+  const STAGES = ['carpentry','polish','upholstery','packing'];
+  const LABELS = {carpentry:'Structure', polish:'Polish', upholstery:'Upholstery', packing:'Packing'};
+  const STAGE_ORDER = ['Structure','Polish','Upholstery','Packing','Delivered','Completed'];
+
+  const totalItems = items.length;
+  const readyItems = items.filter(i => i.overallStatus === 'Ready').length;
+  const pct = totalItems ? Math.round(readyItems / totalItems * 100) : 0;
+
+  const statusClass = 's-' + (project.status || 'not-started').toLowerCase().replace(/\s+/g,'-');
+
+  // Stage completion summary (across all items)
+  const stageSummary = STAGES.map(stage => {
+    const valid = items.filter(i => i[stage+'Status'] !== 'na');
+    if (!valid.length) return { stage, label: LABELS[stage], pct: null, na: true };
+    const done = valid.filter(i => i[stage+'Status'] === 'done').length;
+    return { stage, label: LABELS[stage], pct: Math.round(done / valid.length * 100), na: false };
+  }).filter(s => !s.na);
+
+  // Handover notice
+  let handoverNotice = '';
+  if (project.handoverDate) {
+    const hDate = new Date(project.handoverDate);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const daysLeft = Math.round((hDate - today) / 86400000);
+    if (['Delivered','Completed'].includes(project.status)) {
+      handoverNotice = '<div class="handover-notice hn-ok">✓ Project delivered' + (project.deliveredDate ? ' on ' + formatDate(project.deliveredDate) : '') + '</div>';
+    } else if (daysLeft < 0) {
+      handoverNotice = '<div class="handover-notice hn-late">⚠ Handover was planned for ' + formatDate(project.handoverDate) + '. Our team is working to complete this as soon as possible.</div>';
+    } else if (daysLeft <= 7) {
+      handoverNotice = '<div class="handover-notice hn-soon">🕐 Handover in ' + daysLeft + ' day' + (daysLeft===1?'':'s') + ' — ' + formatDate(project.handoverDate) + '</div>';
+    }
+  }
+
+  // Timeline
+  const currentStageIdx = STAGE_ORDER.indexOf(project.status);
+  const timelineHtml = STAGE_ORDER.map((s, i) => {
+    const isDone = currentStageIdx > i;
+    const isCurrent = currentStageIdx === i;
+    const dotCls = isDone ? 'dot-done' : isCurrent ? 'dot-current' : 'dot-pending';
+    const textCls = isDone ? '' : isCurrent ? 'font-weight:500' : 'color:var(--ink-3)';
+    return '<div class="timeline-item">' +
+      '<div class="timeline-dot ' + dotCls + '"></div>' +
+      '<div class="timeline-text">' +
+        '<div class="timeline-stage" style="' + textCls + '">' + s + (isCurrent ? ' <span style="font-size:11px;font-weight:400;color:var(--gold)">(current)</span>' : '') + '</div>' +
+        (isDone ? '<div class="timeline-sub">Completed</div>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('main').innerHTML =
+    '<div class="card">' +
+      '<div class="card-header">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">' +
+          '<div>' +
+            '<div class="project-title">' + esc(project.projectName||'—') + '</div>' +
+            '<div class="project-sub">' + esc(project.location||'') + (project.orderNo ? ' · Order #' + esc(project.orderNo) : '') + '</div>' +
+          '</div>' +
+          '<span class="status-badge ' + statusClass + '">' + (project.status||'Not started') + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="meta-grid">' +
+        '<div class="meta-item"><label>Planned handover</label><span>' + (project.handoverDate ? formatDate(project.handoverDate) : '—') + '</span></div>' +
+        '<div class="meta-item"><label>Your contact</label><span>' + esc(project.assignee||'—') + '</span></div>' +
+        '<div class="meta-item"><label>Total items</label><span>' + totalItems + '</span></div>' +
+        '<div class="meta-item"><label>Fabric status</label><span>' + esc(project.fabricStatus||'Not selected') + '</span></div>' +
+      '</div>' +
+    '</div>' +
+
+    handoverNotice +
+
+    '<div class="card">' +
+      '<div class="progress-section">' +
+        '<div class="progress-label"><span>Production progress</span><span>' + pct + '%</span></div>' +
+        '<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div>' +
+        (stageSummary.length > 0 ?
+          '<div class="stage-pills">' +
+            stageSummary.map(s =>
+              '<span class="stage-pill ' + (s.pct === 100 ? 'sp-done' : 'sp-pending') + '">' +
+                s.label + ' ' + s.pct + '%' +
+              '</span>'
+            ).join('') +
+          '</div>'
+        : '') +
+      '</div>' +
+    '</div>' +
+
+    '<div class="card">' +
+      '<div class="timeline-section">' +
+        '<div class="timeline-title">Project timeline</div>' +
+        timelineHtml +
+      '</div>' +
+    '</div>';
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN', {day:'2-digit', month:'long', year:'numeric'});
+}
+
+function esc(s) {
+  return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

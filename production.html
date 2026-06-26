@@ -12,7 +12,7 @@
 <title>Lyffin Ops — Production</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--ink:#1a1a18;--ink-2:#4a4a46;--ink-3:#9a9890;--surface:#f7f6f2;--surface-2:#eeecea;--border:#dddbd5;--gold:#b89a6a;--white:#ffffff;--radius:6px;--sidebar-w:220px;--font-sans:'Inter',system-ui,sans-serif;--font-disp:'Playfair Display',Georgia,serif}
+:root{--ink:#1a1a18;--ink-2:#4a4a46;--ink-3:#9a9890;--surface:#f7f6f2;--surface-2:#eeecea;--border:#dddbd5;--gold:#b89a6a;--gold-lt:rgba(184,154,106,0.12);--white:#ffffff;--radius:6px;--sidebar-w:220px;--font-sans:'Inter',system-ui,sans-serif;--font-disp:'Playfair Display',Georgia,serif}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:wght@500;600&display=swap');
 body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min-height:100vh;display:flex}
 .sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--ink);display:flex;flex-direction:column;flex-shrink:0;position:fixed;left:0;top:0;bottom:0}
@@ -35,7 +35,14 @@ body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min
 .main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column}
 .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
 .topbar-title{font-family:var(--font-disp);font-size:18px;font-weight:500}
+.topbar-actions{display:flex;align-items:center;gap:10px}
 .filter-select{height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font-sans);color:var(--ink-2);background:var(--white);cursor:pointer;outline:none}
+.btn{height:36px;padding:0 16px;border-radius:var(--radius);font-size:13px;font-weight:500;font-family:var(--font-sans);cursor:pointer;border:none;transition:all .12s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--ink);color:var(--white)}
+.btn-primary:hover{background:#2e2e2a}
+.btn-ghost{background:transparent;color:var(--ink-2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--surface-2)}
+.btn svg{width:14px;height:14px}
 .content{padding:28px 32px;flex:1}
 .projects-grid{display:flex;flex-direction:column;gap:20px}
 .project-card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden}
@@ -59,7 +66,7 @@ body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min
 .items-table tr:last-child td{border-bottom:none}
 .item-name{font-weight:500;font-size:14px}
 .item-meta{font-size:12px;color:var(--ink-3);margin-top:2px}
-.stages{display:flex;gap:6px;flex-wrap:wrap}
+.stages{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .sp{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:20px;font-size:12px;font-weight:500;font-family:var(--font-sans);cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--ink-3);transition:all .15s;white-space:nowrap}
 .sp:hover{border-color:var(--ink-3);color:var(--ink-2)}
 .sp:active{transform:scale(0.97)}
@@ -69,6 +76,12 @@ body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min
 .sp.done-upholstery{background:#e0f2fe;color:#075985;border-color:#0ea5e9}
 .sp.done-packing{background:#d1fae5;color:#065f46;border-color:#10b981}
 .sp.done-ready{background:#dcfce7;color:#14532d;border-color:#22c55e}
+/* Supervisor approve button */
+.sp-approve{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:500;font-family:var(--font-sans);cursor:pointer;border:1.5px solid #16a34a;background:#f0fdf4;color:#16a34a;transition:all .15s;white-space:nowrap}
+.sp-approve:hover{background:#dcfce7}
+.sp-approve:disabled{cursor:not-allowed;opacity:0.5}
+/* Awaiting approval indicator */
+.awaiting-approval{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;color:#d97706;background:#fef3cd;border:1px solid #d97706;white-space:nowrap}
 .overall-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:500}
 .overall-badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0}
 .ob-structure{background:#fef3cd;color:#92400e}.ob-structure::before{background:#d97706}
@@ -88,112 +101,40 @@ body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min
 .project-header:hover{background:var(--surface)}
 .toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--white);padding:10px 16px;border-radius:var(--radius);font-size:13px;z-index:200;transform:translateY(80px);opacity:0;transition:all .25s ease}
 .toast.show{transform:translateY(0);opacity:1}
-@media(max-width:700px){.sidebar{display:none}.main{margin-left:0}.content{padding:16px}.topbar{padding:0 16px}}
-
+/* Remark row */
+.remark-row{display:flex;align-items:center;gap:6px;margin-top:6px}
+.remark-input{flex:1;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:var(--font-sans);outline:none;color:var(--ink);background:var(--white);transition:border-color .12s}
+.remark-input:focus{border-color:var(--gold)}
+.remark-saved{font-size:11px;color:var(--ink-3);font-style:italic;margin-top:4px}
+/* Audit trail tooltip */
+.audit-info{font-size:10px;color:var(--ink-3);margin-top:3px}
+/* Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:center;justify-content:center;padding:24px}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--white);border-radius:10px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.modal-header{padding:22px 26px 0;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:var(--font-disp);font-size:20px;font-weight:500}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--ink-3);padding:4px;border-radius:4px;display:flex;align-items:center}
+.modal-close:hover{color:var(--ink)}
+.modal-close svg{width:18px;height:18px}
+.modal-body{padding:18px 26px 26px;display:flex;flex-direction:column;gap:14px}
+.modal-footer{padding:0 26px 22px;display:flex;justify-content:flex-end;gap:10px}
+.form-field label{display:block;font-size:11px;font-weight:500;color:var(--ink-2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.form-field input,.form-field select,.form-field textarea{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13.5px;font-family:var(--font-sans);color:var(--ink);background:var(--white);outline:none;transition:border-color .12s}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-lt)}
+/* Bulk bar */
+.bulk-bar{background:var(--ink);color:var(--white);padding:10px 20px;display:flex;align-items:center;gap:12px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.1)}
+.bulk-bar select{background:rgba(255,255,255,0.12);color:var(--white);border:1px solid rgba(255,255,255,0.2);border-radius:var(--radius);padding:5px 10px;font-size:12px;font-family:var(--font-sans);outline:none}
+.bulk-bar select option{background:var(--ink);color:var(--white)}
+@media(max-width:700px){.sidebar{display:none}.main{margin-left:0}.content{padding:16px 12px 80px}.topbar{padding:0 16px}}
 /* Mobile bottom nav */
-.bottom-nav {
-  display: none;
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: var(--ink);
-  height: 60px;
-  z-index: 50;
-  border-top: 1px solid rgba(255,255,255,0.07);
-}
-.bottom-nav-inner {
-  display: flex;
-  height: 100%;
-}
-.bn-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  text-decoration: none;
-  color: rgba(255,255,255,0.4);
-  font-size: 10px;
-  font-weight: 500;
-  font-family: var(--font-sans);
-  transition: color .15s;
-}
-.bn-item.active { color: var(--gold); }
-.bn-item svg { width: 20px; height: 20px; }
-
-}
-
-/* ── MOBILE APP STYLES ── */
-@media (max-width: 700px) {
-  body { font-size: 14px; }
-  .topbar { padding: 0 16px; height: 52px; }
-  .topbar-title { font-size: 16px; }
-  .content { padding: 16px 12px 80px; }
-  .stats-row { grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 16px; }
-  .stat-card { padding: 14px 14px; }
-  .stat-value { font-size: 22px; }
-  .stat-label { font-size: 10px; }
-  .table-wrap { border-radius: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { min-width: 500px; }
-  .filters { gap: 8px; }
-  .search-box { max-width: 100%; }
-  .filter-select { font-size: 12px; height: 34px; }
-  .btn { height: 38px; font-size: 12px; padding: 0 12px; }
-  .project-card { border-radius: 8px; }
-  .project-name { font-size: 14px; }
-  .project-meta { font-size: 11px; }
-  .progress-bar-bg { width: 80px; }
-  .section-card { border-radius: 8px; }
-  /* Production mobile */
-  .items-table th, .items-table td { padding: 10px 12px; }
-  .stages { gap: 4px; }
-  .sp { padding: 5px 10px; font-size: 11px; }
-  /* Make tap targets bigger */
-  .sp, .btn, .nav-item, .tab { min-height: 40px; }
-  /* Remove hover effects on touch */
-  .sp:hover { transform: none; }
-}
-
-@media (max-width: 700px) {
-  .items-table { min-width: unset; width: 100%; }
-  .items-table thead { display: none; }
-  .items-table tbody tr { display: flex; flex-direction: column; padding: 12px 16px; border-bottom: 1px solid var(--surface-2); gap: 8px; }
-  .items-table td { padding: 0; border: none; }
-  .stages { gap: 6px; flex-wrap: wrap; }
-  .sp { padding: 7px 12px; font-size: 12px; }
-  .overall-badge { align-self: flex-start; }
-  .project-header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px 16px; }
-  .progress-wrap { width: 100%; justify-content: space-between; }
-  .progress-bar-bg { flex: 1; }
-}
-
-/* ── BOTTOM NAV ── */
-.bottom-nav {
-  display: none;
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: var(--ink);
-  height: 64px;
-  z-index: 50;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-.bottom-nav-inner { display: flex; height: 100%; align-items: stretch; width: 100%; justify-content: space-around; }
-.bn-item {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 3px; text-decoration: none;
-  color: rgba(255,255,255,0.35); font-size: 9px; font-weight: 500;
-  font-family: var(--font-sans); letter-spacing: 0.03em; text-transform: uppercase;
-  cursor: pointer; border: none; background: none; transition: color .15s; padding: 0;
-}
-.bn-item.active { color: var(--gold); }
-.bn-item svg { width: 22px; height: 22px; }
-@media (max-width: 700px) {
-  .sidebar { display: none !important; }
-  .main { margin-left: 0 !important; }
-  .content { padding-bottom: 80px !important; }
-  .bottom-nav { display: flex; }
-}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--ink);height:64px;z-index:50;border-top:1px solid rgba(255,255,255,0.08);padding-bottom:env(safe-area-inset-bottom)}
+.bottom-nav-inner{display:flex;height:100%;align-items:stretch;width:100%;justify-content:space-around}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:rgba(255,255,255,0.35);font-size:9px;font-weight:500;font-family:var(--font-sans);letter-spacing:.03em;text-transform:uppercase;cursor:pointer;border:none;background:none;transition:color .15s;padding:0}
+.bn-item.active{color:var(--gold)}
+.bn-item svg{width:22px;height:22px}
+@media(max-width:700px){.sidebar{display:none!important}.main{margin-left:0!important}.content{padding-bottom:80px!important}.bottom-nav{display:flex}}
+@media(max-width:700px){.items-table{min-width:unset;width:100%}.items-table thead{display:none}.items-table tbody tr{display:flex;flex-direction:column;padding:12px 16px;border-bottom:1px solid var(--surface-2);gap:8px}.items-table td{padding:0;border:none}.stages{gap:6px;flex-wrap:wrap}.sp{padding:7px 12px;font-size:12px}.overall-badge{align-self:flex-start}.project-header{flex-direction:column;align-items:flex-start;gap:10px;padding:14px 16px}.progress-wrap{width:100%;justify-content:space-between}.progress-bar-bg{flex:1}}
 </style>
 </head>
 <body>
@@ -233,14 +174,31 @@ body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min
 <div class="main">
   <div class="topbar">
     <div class="topbar-title">Production</div>
-    <select class="filter-select" id="filter-status" onchange="filterProjects()">
-      <option value="">All active projects</option>
-      <option value="Structure">Structure</option>
-      <option value="Polish">Polish</option>
-      <option value="Upholstery">Upholstery</option>
-      <option value="Packing">Packing</option>
-      <option value="Ready">Ready</option>
-    </select>
+    <div class="topbar-actions">
+      <!-- Bulk status update — supervisor/admin only, shown after auth -->
+      <div id="bulk-controls" style="display:none;align-items:center;gap:8px">
+        <select class="filter-select" id="bulk-project-sel" style="max-width:200px">
+          <option value="">Select project…</option>
+        </select>
+        <select class="filter-select" id="bulk-status-sel">
+          <option value="">New status…</option>
+          <option value="Structure">Structure</option>
+          <option value="Polish">Polish</option>
+          <option value="Upholstery">Upholstery</option>
+          <option value="Packing">Packing</option>
+          <option value="Delivered">Delivered</option>
+        </select>
+        <button class="btn btn-ghost" onclick="bulkUpdateStatus()" style="height:36px">Apply</button>
+      </div>
+      <select class="filter-select" id="filter-status" onchange="filterProjects()">
+        <option value="">All active projects</option>
+        <option value="Structure">Structure</option>
+        <option value="Polish">Polish</option>
+        <option value="Upholstery">Upholstery</option>
+        <option value="Packing">Packing</option>
+        <option value="Ready">Ready</option>
+      </select>
+    </div>
   </div>
   <div class="content">
     <div class="projects-grid" id="projects-grid">
@@ -248,11 +206,34 @@ body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min
     </div>
   </div>
 </div>
+
+<!-- Remark modal -->
+<div class="modal-backdrop" id="modal-remark">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add remark</div>
+      <button class="modal-close" onclick="closeRemarkModal()">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="2" x2="16" y2="16"/><line x1="16" y1="2" x2="2" y2="16"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label id="remark-modal-label">Remark for item</label>
+        <textarea id="remark-textarea" placeholder="e.g. Left leg has minor crack — noted for supervisor review…" style="min-height:80px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeRemarkModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRemark()">Save remark</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js';
-import { getFirestore, collection, onSnapshot, query, doc, getDoc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
+import { getFirestore, collection, onSnapshot, query, doc, getDoc, updateDoc, getDocs, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC0aoUyBCHn63-WkJnPFbDJLF0x1GFMyxU",
@@ -271,38 +252,56 @@ const STAGES = ['carpentry','polish','upholstery','packing','ready'];
 const LABELS = {carpentry:'Structure',polish:'Polish',upholstery:'Upholstery',packing:'Packing',ready:'Ready'};
 let allData = [];
 const itemsCache = {};
+let currentRole = 'floor';
+let currentUserName = '';
+let currentUserUID = '';
+
+// Remark modal state
+let _remarkProjectId = null;
+let _remarkItemId = null;
+let _remarkItemName = '';
 
 onAuthStateChanged(auth, async function(user) {
   if (!user) { window.location.href = 'login.html'; return; }
   const snap = await getDoc(doc(db, 'users', user.uid));
   const data = snap.exists() ? snap.data() : {};
   const name = data.name || user.email.split('@')[0];
-  const role = data.role || 'floor';
-  const uid = user.uid;
+  currentRole = data.role || 'floor';
+  currentUserName = name;
+  currentUserUID = user.uid;
 
   document.getElementById('user-name').textContent = name;
-  document.getElementById('user-role').textContent = role;
+  document.getElementById('user-role').textContent = currentRole;
   document.getElementById('user-avatar').textContent = name.substring(0,2).toUpperCase();
-  if (role === 'admin') {
+  if (currentRole === 'admin') {
     document.getElementById('nav-admin-section').style.display = 'block';
     document.getElementById('nav-admin').style.display = 'flex';
     const bnA = document.getElementById('bn-admin');
     if (bnA) bnA.style.display = 'flex';
   }
-  console.log('Auth done, role:', role, 'name:', name);
-  loadProduction(role, name, uid);
+  // Show bulk controls for supervisor/admin
+  if (['admin','supervisor'].includes(currentRole)) {
+    document.getElementById('bulk-controls').style.display = 'flex';
+  }
+  loadProduction(currentRole, name, user.uid);
 });
 
 function loadProduction(role, userName, uid) {
   onSnapshot(query(collection(db, 'projects')), function(snap) {
     let projects = snap.docs.map(function(d) { return Object.assign({id:d.id}, d.data()); });
-    // Filter for sales immediately at data load
     if (role === 'sales') {
       projects = projects.filter(function(p) {
         return p.assignee === userName || p.assigneeUid === uid;
       });
     }
     window._projects = projects;
+    // Populate bulk project selector
+    const bulkSel = document.getElementById('bulk-project-sel');
+    if (bulkSel) {
+      bulkSel.innerHTML = '<option value="">Select project…</option>' +
+        projects.filter(p => !['Delivered','Completed'].includes(p.status))
+          .map(p => '<option value="' + p.id + '">' + esc(p.projectName||p.id) + '</option>').join('');
+    }
     for (let i = 0; i < projects.length; i++) {
       const proj = projects[i];
       if (!itemsCache[proj.id]) {
@@ -315,7 +314,6 @@ function loadProduction(role, userName, uid) {
         })(proj.id);
       }
     }
-    console.log('Projects loaded:', projects.length);
     rebuild();
     document.getElementById('page-loading').style.display = 'none';
   });
@@ -367,7 +365,7 @@ function renderCard(d) {
     '</div>' +
     '<div class="items-wrap ' + (isOpen?'open':'') + '" id="pw-' + pid + '">' +
       '<table class="items-table">' +
-        '<thead><tr><th>Product</th><th>Stages</th><th>Status</th></tr></thead>' +
+        '<thead><tr><th>Product</th><th>Stages</th><th>Status</th><th>Remark</th></tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
       '</table>' +
     '</div>' +
@@ -375,40 +373,167 @@ function renderCard(d) {
 }
 
 function renderRow(projectId, item) {
-  const validStages = STAGES; // show all stages, N/A shown as label
   let pills = '';
-  for (let i = 0; i < validStages.length; i++) {
-    const stage = validStages[i];
+  for (let i = 0; i < STAGES.length; i++) {
+    const stage = STAGES[i];
     const status = item[stage + 'Status'] || 'pending';
     const isDone = status === 'done';
     const isNA = status === 'na';
+    const isPendingApproval = status === 'pending_approval';
     const label = LABELS[stage] || stage;
-    const cls = isDone ? ('sp done-' + stage) : 'sp';
 
     if (isNA) {
-      // Show N/A as a grey label with undo option
       pills += '<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:4px 8px;border-radius:12px;background:var(--surface-2);color:var(--ink-3)">' +
         label + ': N/A' +
         '<button onclick="undoNA(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)" style="font-size:10px;margin-left:3px;background:none;border:none;cursor:pointer;color:var(--ink-3);padding:0" title="Undo N/A">✕</button>' +
         '</span>';
+    } else if (isPendingApproval) {
+      // Awaiting supervisor approval
+      pills += '<span class="awaiting-approval">⏳ ' + label + ': awaiting approval</span>';
+      // Supervisor/admin see an Approve button
+      if (['admin','supervisor'].includes(currentRole)) {
+        pills += '<button class="sp-approve" onclick="approveStage(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)">✓ Approve</button>';
+      }
     } else {
-      pills += '<button class="' + cls + '" onclick="tap(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)">' + (isDone ? '&#10003; ' : '') + label + '</button>';
-      // N/A only for Polish and Upholstery — Structure and Packing are compulsory
+      const cls = isDone ? ('sp done-' + stage) : 'sp';
+      pills += '<button class="' + cls + '" onclick="tap(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)">' + (isDone ? '✓ ' : '') + label + '</button>';
       if (!isDone && (stage === 'polish' || stage === 'upholstery')) {
         pills += '<button onclick="markNA(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)" style="font-size:10px;padding:3px 6px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--ink-3);cursor:pointer;margin-left:2px;vertical-align:middle" title="Mark as not applicable">N/A</button>';
       }
     }
   }
+
   const obCls = 'ob-' + (item.overallStatus || 'structure').toLowerCase().replace(/\s/g,'');
+
+  // Audit trail: who last touched this item
+  let auditHtml = '';
+  if (item.lastMarkedBy && item.lastMarkedAt) {
+    const d = item.lastMarkedAt.toDate ? item.lastMarkedAt.toDate() : new Date(item.lastMarkedAt);
+    auditHtml = '<div class="audit-info">Last updated by ' + esc(item.lastMarkedBy) + ' · ' + d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + '</div>';
+  }
+
+  // Remark display
+  const remarkHtml = '<button onclick="openRemarkModal(\'' + projectId + '\',\'' + item.id + '\',\'' + esc(item.name||'Item') + '\')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--ink-3);cursor:pointer;white-space:nowrap">' +
+    (item.remark ? '✏ Edit' : '+ Add') +
+  '</button>' +
+  (item.remark ? '<div class="remark-saved">' + esc(item.remark) + '</div>' : '');
+
   return '<tr>' +
     '<td>' +
       '<div class="item-name">' + esc(item.name||'Unnamed') + '</div>' +
       '<div class="item-meta">Qty: ' + (item.qty||1) + (item.area ? ' · ' + esc(item.area) : '') + (item.dimensions ? ' · ' + esc(item.dimensions) : '') + '</div>' +
+      auditHtml +
     '</td>' +
     '<td><div class="stages">' + pills + '</div></td>' +
     '<td><span class="overall-badge ' + obCls + '">' + (item.overallStatus||'Structure') + '</span></td>' +
+    '<td>' + remarkHtml + '</td>' +
   '</tr>';
 }
+
+// ── STAGE ACTIONS ──────────────────────────────────────────────────────────
+
+window.tap = async function(projectId, itemId, stage, btn) {
+  if (btn.disabled) return;
+  btn.disabled = true;
+  try {
+    const itemRef = doc(db, 'projects', projectId, 'items', itemId);
+    const snap = await getDoc(itemRef);
+    if (!snap.exists()) { showToast('Item not found'); btn.disabled = false; return; }
+    const item = snap.data();
+    const current = item[stage + 'Status'] || 'pending';
+
+    // Floor staff: marking done sends to pending_approval for supervisor gate
+    // Supervisors/admin: tap directly to done
+    let next;
+    if (current === 'done') {
+      next = 'pending'; // undo is always direct
+    } else if (['floor'].includes(currentRole) && stage !== 'ready') {
+      next = 'pending_approval';
+    } else {
+      next = 'done';
+    }
+
+    const updates = {};
+    updates[stage + 'Status'] = next;
+    updates.lastMarkedBy = currentUserName;
+    updates.lastMarkedAt = serverTimestamp();
+
+    // Record audit trail in stageAudit map
+    const auditKey = 'audit_' + stage;
+    updates[auditKey] = { by: currentUserName, uid: currentUserUID, at: new Date().toISOString(), status: next };
+
+    const valid = STAGES.filter(function(s) { return item[s + 'Status'] !== 'na'; });
+    const sim = Object.assign({}, item, updates);
+    // For overall status, pending_approval counts as "not done yet"
+    const firstPending = valid.find(function(s) {
+      const st = sim[s + 'Status'] || 'pending';
+      return st === 'pending' || st === 'pending_approval';
+    });
+    updates.overallStatus = firstPending ? LABELS[firstPending] : 'Ready';
+    if (updates.overallStatus === 'Ready') updates[stage + 'Status'] = 'done'; // if all done, commit directly
+
+    await updateDoc(itemRef, updates);
+
+    // Log activity
+    await logActivity(projectId, next === 'pending_approval'
+      ? currentUserName + ' completed ' + LABELS[stage] + ' on ' + (item.name||'item') + ' — awaiting supervisor approval'
+      : next === 'done'
+        ? currentUserName + ' marked ' + LABELS[stage] + ' done on ' + (item.name||'item')
+        : currentUserName + ' undid ' + LABELS[stage] + ' on ' + (item.name||'item')
+    );
+
+    if (next === 'pending_approval') {
+      showToast(LABELS[stage] + ' submitted — awaiting supervisor approval');
+    } else {
+      showToast(next === 'done' ? (LABELS[stage] + ' complete') : (LABELS[stage] + ' undone'));
+    }
+
+    // Check if all items ready → update project status
+    const allSnap = await getDocs(collection(db, 'projects', projectId, 'items'));
+    const allReady = allSnap.docs.every(function(d) {
+      const data = d.data();
+      if (d.id === itemId) return updates.overallStatus === 'Ready';
+      return data.overallStatus === 'Ready';
+    });
+    if (allReady) {
+      await updateDoc(doc(db, 'projects', projectId), {status:'Packing'});
+      await logActivity(projectId, 'All items ready — project moved to Packing');
+    }
+  } catch(e) {
+    console.error(e);
+    showToast('Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+window.approveStage = async function(projectId, itemId, stage, btn) {
+  if (btn.disabled) return;
+  btn.disabled = true;
+  try {
+    const itemRef = doc(db, 'projects', projectId, 'items', itemId);
+    const snap = await getDoc(itemRef);
+    if (!snap.exists()) { btn.disabled = false; return; }
+    const item = snap.data();
+    const updates = {};
+    updates[stage + 'Status'] = 'done';
+    updates.lastMarkedBy = currentUserName;
+    updates.lastMarkedAt = serverTimestamp();
+    updates['audit_' + stage] = { by: currentUserName, uid: currentUserUID, at: new Date().toISOString(), status: 'approved' };
+
+    const valid = STAGES.filter(s => item[s + 'Status'] !== 'na');
+    const sim = Object.assign({}, item, updates);
+    const firstPending = valid.find(s => {
+      const st = sim[s + 'Status'] || 'pending';
+      return st === 'pending' || st === 'pending_approval';
+    });
+    updates.overallStatus = firstPending ? LABELS[firstPending] : 'Ready';
+    await updateDoc(itemRef, updates);
+    await logActivity(projectId, currentUserName + ' approved ' + LABELS[stage] + ' for ' + (item.name||'item'));
+    showToast(LABELS[stage] + ' approved');
+  } catch(e) { showToast('Error: ' + e.message); }
+  finally { btn.disabled = false; }
+};
 
 window.undoNA = async function(projectId, itemId, stage, btn) {
   if (btn.disabled) return;
@@ -420,10 +545,11 @@ window.undoNA = async function(projectId, itemId, stage, btn) {
     const item = snap.data();
     const updates = {};
     updates[stage + 'Status'] = 'pending';
-    const valid = STAGES.filter(s => s !== stage ? item[s + 'Status'] !== 'na' : true);
+    updates.lastMarkedBy = currentUserName;
+    updates.lastMarkedAt = serverTimestamp();
     const sim = Object.assign({}, item, updates);
-    const firstPending = STAGES.filter(s => sim[s + 'Status'] !== 'na')
-      .find(s => (sim[s + 'Status'] || 'pending') === 'pending');
+    const valid = STAGES.filter(s => sim[s + 'Status'] !== 'na');
+    const firstPending = valid.find(s => (sim[s + 'Status'] || 'pending') === 'pending');
     updates.overallStatus = firstPending ? LABELS[firstPending] : 'Ready';
     await updateDoc(itemRef, updates);
     showToast(LABELS[stage] + ' restored to pending');
@@ -443,50 +569,76 @@ window.markNA = async function(projectId, itemId, stage, btn) {
     const item = snap.data();
     const updates = {};
     updates[stage + 'Status'] = 'na';
+    updates.lastMarkedBy = currentUserName;
+    updates.lastMarkedAt = serverTimestamp();
     const valid = STAGES.filter(s => item[s + 'Status'] !== 'na' && s !== stage);
     const sim = Object.assign({}, item, updates);
     const firstPending = valid.find(s => (sim[s + 'Status'] || 'pending') === 'pending');
     updates.overallStatus = firstPending ? LABELS[firstPending] : 'Ready';
     await updateDoc(itemRef, updates);
-    showToast('Upholstery marked as N/A');
+    showToast(stageLabel + ' marked as N/A');
   } catch(e) { showToast('Error: ' + e.message); }
   finally { btn.disabled = false; }
 };
 
-window.tap = async function(projectId, itemId, stage, btn) {
-  if (btn.disabled) return;
-  btn.disabled = true;
-  try {
-    const itemRef = doc(db, 'projects', projectId, 'items', itemId);
-    const snap = await getDoc(itemRef);
-    if (!snap.exists()) { showToast('Item not found'); btn.disabled = false; return; }
-    const item = snap.data();
-    const current = item[stage + 'Status'] || 'pending';
-    const next = current === 'done' ? 'pending' : 'done';
-    const updates = {};
-    updates[stage + 'Status'] = next;
-    const valid = STAGES.filter(function(s) { return item[s + 'Status'] !== 'na'; });
-    const sim = Object.assign({}, item, updates);
-    const firstPending = valid.find(function(s) { return (sim[s + 'Status'] || 'pending') === 'pending'; });
-    updates.overallStatus = firstPending ? LABELS[firstPending] : 'Ready';
-    await updateDoc(itemRef, updates);
-    showToast(next === 'done' ? (LABELS[stage] + ' complete') : (LABELS[stage] + ' undone'));
-    const allSnap = await getDocs(collection(db, 'projects', projectId, 'items'));
-    const allReady = allSnap.docs.every(function(d) {
-      const data = d.data();
-      if (d.id === itemId) return updates.overallStatus === 'Ready';
-      return data.overallStatus === 'Ready';
-    });
-    if (allReady) {
-      await updateDoc(doc(db, 'projects', projectId), {status:'Packing'});
-    }
-  } catch(e) {
-    console.error(e);
-    showToast('Error: ' + e.message);
-  } finally {
-    btn.disabled = false;
-  }
+// ── REMARK MODAL ──────────────────────────────────────────────────────────
+window.openRemarkModal = function(projectId, itemId, itemName) {
+  _remarkProjectId = projectId;
+  _remarkItemId = itemId;
+  _remarkItemName = itemName;
+  // Pre-fill with existing remark
+  const cachedItems = itemsCache[projectId] || [];
+  const item = cachedItems.find(i => i.id === itemId);
+  document.getElementById('remark-modal-label').textContent = 'Remark for: ' + itemName;
+  document.getElementById('remark-textarea').value = (item && item.remark) ? item.remark : '';
+  document.getElementById('modal-remark').classList.add('open');
 };
+
+window.closeRemarkModal = function() {
+  document.getElementById('modal-remark').classList.remove('open');
+  _remarkProjectId = null; _remarkItemId = null;
+};
+
+window.saveRemark = async function() {
+  if (!_remarkProjectId || !_remarkItemId) return;
+  const remark = document.getElementById('remark-textarea').value.trim();
+  try {
+    await updateDoc(doc(db, 'projects', _remarkProjectId, 'items', _remarkItemId), {
+      remark,
+      remarkBy: currentUserName,
+      remarkAt: serverTimestamp()
+    });
+    await logActivity(_remarkProjectId, currentUserName + ' added remark on ' + _remarkItemName + ': ' + (remark || '(cleared)'));
+    closeRemarkModal();
+    showToast('Remark saved');
+  } catch(e) { showToast('Error: ' + e.message); }
+};
+
+// ── BULK STATUS UPDATE ────────────────────────────────────────────────────
+window.bulkUpdateStatus = async function() {
+  const projectId = document.getElementById('bulk-project-sel').value;
+  const newStatus = document.getElementById('bulk-status-sel').value;
+  if (!projectId || !newStatus) { showToast('Select a project and status'); return; }
+  const projName = (window._projects||[]).find(p=>p.id===projectId)?.projectName || projectId;
+  if (!confirm('Change status of "' + projName + '" to ' + newStatus + '?')) return;
+  try {
+    await updateDoc(doc(db, 'projects', projectId), { status: newStatus, updatedAt: serverTimestamp() });
+    await logActivity(projectId, currentUserName + ' bulk-updated project status to ' + newStatus);
+    showToast(projName + ' → ' + newStatus);
+  } catch(e) { showToast('Error: ' + e.message); }
+};
+
+// ── ACTIVITY LOG ──────────────────────────────────────────────────────────
+async function logActivity(projectId, message) {
+  try {
+    await addDoc(collection(db, 'projects', projectId, 'activity'), {
+      message,
+      by: currentUserName,
+      uid: currentUserUID,
+      at: serverTimestamp()
+    });
+  } catch(e) { /* non-critical */ }
+}
 
 window.toggleProject = function(pid) {
   const wrap = document.getElementById('pw-' + pid);
@@ -515,8 +667,6 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/lyffin-ops/sw.js');
 }
 </script>
-
-
 <div class="bottom-nav">
   <div class="bottom-nav-inner">
     <a class="bn-item" href="dashboard.html">

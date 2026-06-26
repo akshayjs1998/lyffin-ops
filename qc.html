@@ -408,6 +408,18 @@
           <option value="Upholstery">Upholstery</option>
           <option value="Packing">Packing</option>
         </select>
+        <select class="filter-select" id="filter-qc-category" onchange="filterQCByCategory(this.value)">
+          <option value="">All categories</option>
+          <option value="Finish">Finish</option>
+          <option value="Joinery">Joinery</option>
+          <option value="Fabric">Fabric</option>
+          <option value="Dimension">Dimension</option>
+          <option value="Hardware">Hardware</option>
+          <option value="Polish">Polish</option>
+          <option value="Structure">Structure</option>
+          <option value="Packing">Packing</option>
+          <option value="Other">Other</option>
+        </select>
       </div>
       <div class="table-wrap">
         <table>
@@ -416,10 +428,11 @@
               <th>Project</th>
               <th>Product</th>
               <th>Stage</th>
+              <th>Category</th>
               <th>Issue</th>
               <th>Severity</th>
-              <th>Inspector</th>
               <th>Status</th>
+              <th>Recurrences</th>
             </tr>
           </thead>
           <tbody id="qc-tbody">
@@ -561,8 +574,19 @@
       </div>
       <div class="form-row">
         <div class="form-field">
-          <label>Inspector</label>
-          <input type="text" id="q-inspector" placeholder="Inspector name">
+          <label>Defect category</label>
+          <select id="q-category">
+            <option value="">Select category…</option>
+            <option value="Finish">Finish</option>
+            <option value="Joinery">Joinery</option>
+            <option value="Fabric">Fabric</option>
+            <option value="Dimension">Dimension</option>
+            <option value="Hardware">Hardware</option>
+            <option value="Polish">Polish</option>
+            <option value="Structure">Structure</option>
+            <option value="Packing">Packing</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
         <div class="form-field">
           <label>Responsible team</label>
@@ -575,9 +599,15 @@
           </select>
         </div>
       </div>
-      <div class="form-field">
-        <label>Deadline to fix</label>
-        <input type="date" id="q-deadline">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Inspector</label>
+          <input type="text" id="q-inspector" placeholder="Inspector name">
+        </div>
+        <div class="form-field">
+          <label>Deadline to fix</label>
+          <input type="date" id="q-deadline">
+        </div>
       </div>
 
     </div>
@@ -766,19 +796,16 @@
       const sevClass = 'sev-' + (q.severity || 'low').toLowerCase();
       const statusClass = 'badge-' + (q.status || 'pending').toLowerCase().replace(/\s+/g, '-');
       const projName = projects.find(p => p.id === q.projectId)?.projectName || q.projectId || '—';
+      const reopens = q.reopenCount || 0;
       return `<tr onclick="openUpdateModal('${q.id}','qc')">
         <td><strong>${esc(projName)}</strong></td>
         <td>${esc(q.productName || '—')}</td>
         <td><span class="badge badge-pending" style="font-size:11px">${esc(q.stage || '—')}</span></td>
-        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(q.issue)}">${esc(q.issue || '—')}</td>
+        <td style="font-size:12px;color:var(--ink-3)">${esc(q.category || '—')}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(q.issue)}">${esc(q.issue || '—')}</td>
         <td class="${sevClass}">${q.severity || '—'}</td>
-        <td>${esc(q.inspector || '—')}</td>
-        <td>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span class="badge ${statusClass}">${q.status || 'Pending'}</span>
-
-          </div>
-        </td>
+        <td><span class="badge ${statusClass}">${q.status || 'Pending'}</span></td>
+        <td>${reopens > 0 ? '<span style="color:#c0392b;font-weight:500;font-size:12px">⚠ ' + reopens + 'x</span>' : '<span style="color:var(--ink-3);font-size:12px">—</span>'}</td>
       </tr>`;
     }).join('');
   }
@@ -813,7 +840,13 @@
   };
 
   window.filterQCByStage = function(stage) {
-    renderQC(stage ? allQC.filter(r => r.stage === stage) : allQC);
+    const cat = document.getElementById('filter-qc-category').value;
+    renderQC(allQC.filter(r => (!stage || r.stage === stage) && (!cat || r.category === cat)));
+  };
+
+  window.filterQCByCategory = function(cat) {
+    const stage = document.querySelectorAll('#tab-qc .filter-select')[1]?.value || '';
+    renderQC(allQC.filter(r => (!stage || r.stage === stage) && (!cat || r.category === cat)));
   };
 
   // ── NEW COMPLAINT ─────────────────────────────────────────────────────────
@@ -857,11 +890,13 @@
       stage:       document.getElementById('q-stage').value,
       productName: document.getElementById('q-product').value.trim(),
       severity:    document.getElementById('q-severity').value,
+      category:    document.getElementById('q-category').value,
       issue:       document.getElementById('q-issue').value.trim(),
       inspector:   document.getElementById('q-inspector').value.trim(),
       team:        document.getElementById('q-team').value,
       deadline:    document.getElementById('q-deadline').value,
       status:      'Pending',
+      reopenCount: 0,
       createdAt:   serverTimestamp(),
       createdBy:   currentUser.uid,
     };
@@ -909,12 +944,20 @@
     const notes = document.getElementById('u-notes').value.trim();
     const collName = currentUpdateType === 'complaint' ? 'complaints' : 'qc_reports';
     try {
-      await updateDoc(doc(db, collName, currentUpdateId), {
+      const updatePayload = {
         status: newStatus,
         ...(notes ? { lastNote: notes } : {}),
         updatedAt: serverTimestamp(),
         updatedBy: currentUser.uid,
-      });
+      };
+      // Track recurrences: if re-opening a resolved QC defect
+      if (currentUpdateType === 'qc' && newStatus !== 'Resolved') {
+        const prevRecord = allQC.find(q => q.id === currentUpdateId);
+        if (prevRecord && prevRecord.status === 'Resolved') {
+          updatePayload.reopenCount = (prevRecord.reopenCount || 0) + 1;
+        }
+      }
+      await updateDoc(doc(db, collName, currentUpdateId), updatePayload);
       closeModal('modal-update');
       showToast('Status updated to ' + newStatus);
     } catch(e) { showToast('Error: ' + e.message); }

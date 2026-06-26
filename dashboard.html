@@ -240,7 +240,7 @@
   /* Stats row */
   .stats-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 16px;
     margin-bottom: 28px;
   }
@@ -818,6 +818,11 @@
         <div class="stat-value" id="stat-completed">—</div>
         <div class="stat-sub">this year</div>
       </div>
+      <div class="stat-card" style="border-color:#f5c6c6">
+        <div class="stat-label" style="color:#c0392b">Overdue</div>
+        <div class="stat-value" id="stat-overdue" style="color:#c0392b">—</div>
+        <div class="stat-sub">past handover date</div>
+      </div>
     </div>
 
     <!-- Project progress tracker -->
@@ -1058,6 +1063,13 @@
       allProjects.filter(p => p.status === 'Complaints').length;
     document.getElementById('stat-completed').textContent =
       allProjects.filter(p => p.status === 'Completed').length;
+    const today = new Date(); today.setHours(0,0,0,0);
+    document.getElementById('stat-overdue').textContent =
+      allProjects.filter(p => {
+        if (['Delivered','Completed'].includes(p.status)) return false;
+        if (!p.handoverDate) return false;
+        return new Date(p.handoverDate) < today;
+      }).length;
   }
 
   function populateAssigneeFilter() {

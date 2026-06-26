@@ -465,6 +465,13 @@
         Delete
       </button>`;
     }
+    // Share link — visible to sales, admin, supervisor
+    if (['admin','sales','supervisor'].includes(currentRole)) {
+      html += `<button class="btn btn-ghost" onclick="copyShareLink()" title="Copy shareable client link">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M10 2l4 4-4 4"/><path d="M14 6H6a4 4 0 000 8h1"/></svg>
+        Share
+      </button>`;
+    }
     if (canEdit) {
       html += `<button class="btn btn-ghost" onclick="switchTab('edit', document.querySelectorAll('.tab')[2])">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M11 2l3 3-8 8H3v-3L11 2z"/></svg>
@@ -517,6 +524,7 @@
         <div class="tab" onclick="switchTab('edit', this)">Edit project</div>
         <div class="tab" onclick="switchTab('complaints', this)">Complaints (${complaints.length})</div>
         <div class="tab" onclick="switchTab('notes', this)">Notes</div>
+        <div class="tab" onclick="switchTab('activity', this)">Activity log</div>
       </div>
 
       <!-- Tab content -->
@@ -560,6 +568,7 @@
     if (tab === 'complaints')  el.innerHTML = renderComplaints();
     if (tab === 'notes')       el.innerHTML = renderNotes();
     if (tab === 'supervisor')  el.innerHTML = renderSupervisor();
+    if (tab === 'activity')    { el.innerHTML = '<div class="section-card"><div class="section-header"><div class="section-title">Activity log</div></div><div id="activity-list" style="padding:0"><div class="empty-small">Loading…</div></div></div>'; loadActivityLog(); }
   }
 
   // ── OVERVIEW TAB ──────────────────────────────────────────────────────────
@@ -593,6 +602,18 @@
         <div class="section-header"><div class="section-title">Notes</div></div>
         <div style="padding:16px 20px;font-size:13.5px;color:var(--ink-2);line-height:1.6">${esc(project.notes)}</div>
       </div>` : ''}
+      <div class="section-card" style="border:1px dashed var(--border)">
+        <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--ink)">Client status page</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-top:2px">Read-only link you can share with the client — no login needed</div>
+          </div>
+          <button class="btn btn-ghost" onclick="copyShareLink()" style="flex-shrink:0">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" style="width:14px;height:14px"><path d="M10 2l4 4-4 4"/><path d="M14 6H6a4 4 0 000 8h1"/></svg>
+            Copy link
+          </button>
+        </div>
+      </div>
     `;
   }
 
@@ -690,7 +711,7 @@ ${(function(){
           <div class="form-field">
             <label>Fabric status</label>
             <select id="e-fabric">
-              ${['Not Selected','Fabric List Shared','Selected','Fabric Delivered'].map(f =>
+              ${['Not Selected','Measurements Sent','Client Approved','Fabric List Shared','Fabric Received','Sent to Factory','Fabric Delivered'].map(f =>
                 `<option ${project.fabricStatus===f?'selected':''}>${f}</option>`
               ).join('')}
             </select>
@@ -713,6 +734,7 @@ ${(function(){
 
   window.saveEdit = async function() {
     try {
+      const oldHandover = project.handoverDate || '';
       const updates = {
         projectName:    document.getElementById('e-name').value.trim(),
         orderNo:        document.getElementById('e-order').value.trim(),
@@ -726,6 +748,21 @@ ${(function(){
         updatedAt:      serverTimestamp(),
       };
       await updateDoc(doc(db, 'projects', projectId), updates);
+      // Log handover date change
+      if (updates.handoverDate && updates.handoverDate !== oldHandover) {
+        const userName = document.getElementById('user-name').textContent;
+        await logProjectActivity('Handover date changed from ' + (oldHandover || 'none') + ' to ' + updates.handoverDate + ' by ' + userName);
+        // Store in dateHistory subcollection
+        const { addDoc, collection: col2, serverTimestamp: st2 } = await import('https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js');
+        await addDoc(col2(db, 'projects', projectId, 'dateHistory'), {
+          oldDate: oldHandover,
+          newDate: updates.handoverDate,
+          changedBy: userName,
+          changedAt: st2()
+        });
+      }
+      // Log general edit activity
+      await logProjectActivity((document.getElementById('user-name').textContent) + ' updated project details');
       Object.assign(project, updates);
       showToast('Project updated');
       renderContent();
@@ -859,6 +896,22 @@ ${(function(){
     const notes        = document.getElementById('d-notes').value.trim();
     const status       = document.getElementById('d-status').value;
     if (!deliveryDate) { showToast('Please enter delivery date'); return; }
+    // QC / delivery checklist gate
+    const checks = [
+      'All items have been QC-checked and cleared',
+      'Factory listing documents ready',
+      'Client has been notified of delivery date',
+      'All items are packed and labelled',
+      'Delivery vehicle / logistics confirmed'
+    ];
+    const allChecked = checks.every(function(c) {
+      return confirm('Delivery checklist — confirm:
+
+✓ ' + c + '
+
+Click OK to confirm this item.');
+    });
+    if (!allChecked) { showToast('Delivery checklist incomplete — delivery not confirmed'); return; }
     try {
       await updateDoc(doc(db, 'projects', projectId), {
         status,
@@ -869,6 +922,7 @@ ${(function(){
         updatedAt:       serverTimestamp(),
       });
       Object.assign(project, { status, deliveredDate: deliveryDate, deliveredBy, deliveryNotes: notes });
+      await logProjectActivity(deliveredBy + ' marked project as ' + status + ' on ' + deliveryDate + (notes ? ' · Notes: ' + notes : ''));
       closeModal('modal-delivery');
       showToast('Project marked as ' + status);
       renderContent();
@@ -896,6 +950,15 @@ ${(function(){
 
   window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
 
+  window.copyShareLink = function() {
+    const url = window.location.origin + '/lyffin-ops/share.html?id=' + projectId;
+    navigator.clipboard.writeText(url).then(function() {
+      showToast('Share link copied — send to client');
+    }).catch(function() {
+      prompt('Copy this link and send to your client:', url);
+    });
+  };
+
   window.signOut = async function() { await fbSignOut(auth); window.location.href = 'login.html'; };
 
   function formatDate(d) {
@@ -905,6 +968,65 @@ ${(function(){
 
   function esc(s) {
     return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── ACTIVITY LOG ──────────────────────────────────────────────────────────
+  async function logProjectActivity(message) {
+    try {
+      const { addDoc, collection: col3, serverTimestamp: st3 } = await import('https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js');
+      await addDoc(col3(db, 'projects', projectId, 'activity'), {
+        message,
+        by: document.getElementById('user-name').textContent,
+        uid: currentUser ? currentUser.uid : '',
+        at: st3()
+      });
+    } catch(e) { /* non-critical */ }
+  }
+
+  async function loadActivityLog() {
+    const listEl = document.getElementById('activity-list');
+    if (!listEl) return;
+    try {
+      const { getDocs: gd2, collection: col4, query: q4, orderBy: ob4 } = await import('https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js');
+      const snap = await gd2(q4(col4(db, 'projects', projectId, 'activity'), ob4('at', 'desc')));
+      if (snap.empty) {
+        listEl.innerHTML = '<div class="empty-small">No activity recorded yet.</div>';
+        return;
+      }
+      listEl.innerHTML = snap.docs.map(function(d) {
+        const a = d.data();
+        const dt = a.at && a.at.toDate ? a.at.toDate() : (a.at ? new Date(a.at) : null);
+        const dtStr = dt ? dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + ' ' + dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : '—';
+        return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid var(--surface-2)">' +
+          '<div style="width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:5px"></div>' +
+          '<div style="flex:1">' +
+            '<div style="font-size:13px;color:var(--ink)">' + esc(a.message||'—') + '</div>' +
+            '<div style="font-size:11px;color:var(--ink-3);margin-top:2px">' + dtStr + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+      // Also show handover date history
+      await (async function() {
+        try {
+          const { getDocs: gd3, collection: col5, query: q5, orderBy: ob5 } = await import('https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js');
+          const hSnap = await gd3(q5(col5(db, 'projects', projectId, 'dateHistory'), ob5('changedAt', 'desc')));
+          if (hSnap.empty) return '';
+          return '<div style="padding:14px 20px;border-top:1px solid var(--border);background:var(--surface)">' +
+            '<div style="font-size:11px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Handover date changes</div>' +
+            hSnap.docs.map(function(d) {
+              const h = d.data();
+              const dt2 = h.changedAt && h.changedAt.toDate ? h.changedAt.toDate() : null;
+              return '<div style="font-size:12px;color:var(--ink-2);margin-bottom:6px">' +
+                esc(h.changedBy||'—') + ' changed handover from <strong>' + esc(h.oldDate||'none') + '</strong> to <strong>' + esc(h.newDate||'—') + '</strong>' +
+                (dt2 ? ' <span style="color:var(--ink-3)">· ' + dt2.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) + '</span>' : '') +
+              '</div>';
+            }).join('') +
+          '</div>';
+        } catch(e) { return ''; }
+      })();
+    } catch(e) {
+      listEl.innerHTML = '<div class="empty-small">Error loading activity.</div>';
+    }
   }
 
   function showToast(msg) {
