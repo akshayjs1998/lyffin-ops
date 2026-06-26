@@ -386,8 +386,8 @@ function renderRow(projectId, item) {
         '</span>';
     } else {
       pills += '<button class="' + cls + '" onclick="tap(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)">' + (isDone ? '&#10003; ' : '') + label + '</button>';
-      // N/A button for pending stages (not ready, not done, not packing - packing is compulsory)
-      if (!isDone && stage !== 'ready' && stage !== 'packing') {
+      // N/A only for Polish and Upholstery — Structure and Packing are compulsory
+      if (!isDone && (stage === 'polish' || stage === 'upholstery')) {
         pills += '<button onclick="markNA(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)" style="font-size:10px;padding:3px 6px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--ink-3);cursor:pointer;margin-left:2px;vertical-align:middle" title="Mark as not applicable">N/A</button>';
       }
     }

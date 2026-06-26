@@ -1192,9 +1192,9 @@
 
   // ── SIGN OUT ──────────────────────────────────────────────────────────────
   function calcProjectProgress(items) {
-    // Fixed weights: Structure 30%, Polish 30%, Upholstery 30%, Packing 10%
-    // Packing weight is FIXED — never redistributed
-    // If Structure/Polish/Upholstery are N/A, their weight redistributes among the other non-packing stages
+    // Structure=30%, Polish=30%, Upholstery=30%, Packing=10%
+    // Packing is FIXED at 10% always — never redistributed
+    // If Polish or Upholstery is N/A, their 30% redistributes equally among remaining non-packing stages
     const STAGES = ['carpentry','polish','upholstery','packing'];
     const WEIGHTS = {carpentry:30, polish:30, upholstery:30, packing:10};
 
@@ -1202,33 +1202,36 @@
 
     var totalPct = 0;
     var breakdown = [];
-    var naWeightPool = 0; // only from non-packing stages
+    var naWeightPool = 0;
 
     STAGES.forEach(function(stage) {
       var weight = WEIGHTS[stage];
       var validItems = items.filter(function(i) { return i[stage+'Status'] !== 'na'; });
-      if (validItems.length === 0 && stage !== 'packing') {
-        // N/A — pool weight for redistribution (but NOT packing)
+
+      if (validItems.length === 0 && stage !== 'carpentry' && stage !== 'packing') {
+        // This optional stage is N/A — pool its weight
         breakdown.push({stage:stage, done:0, total:0, pct:0, na:true, weight:weight});
         naWeightPool += weight;
         return;
       }
+
       var doneItems = validItems.filter(function(i) { return i[stage+'Status'] === 'done'; });
       var stagePct = validItems.length > 0 ? (doneItems.length / validItems.length) * weight : 0;
       totalPct += stagePct;
       breakdown.push({stage:stage, done:doneItems.length, total:validItems.length, pct:stagePct, na:false, weight:weight});
     });
 
-    // Redistribute only among non-packing valid stages
+    // Redistribute N/A weight equally among all non-packing valid stages (Structure + any remaining optional)
     if (naWeightPool > 0) {
-      var validNonPacking = breakdown.filter(function(b) { return !b.na && b.stage !== 'packing'; });
-      var totalValidWeight = validNonPacking.reduce(function(s,b){return s+b.weight;}, 0);
-      if (totalValidWeight > 0) {
-        validNonPacking.forEach(function(b) {
-          var extra = (b.weight / totalValidWeight) * naWeightPool;
-          totalPct += (b.done / b.total) * extra;
-        });
-      }
+      var validNonPacking = breakdown.filter(function(b) {
+        return !b.na && b.stage !== 'packing';
+      });
+      var share = naWeightPool / (validNonPacking.length || 1);
+      validNonPacking.forEach(function(b) {
+        if (b.total > 0) {
+          totalPct += (b.done / b.total) * share;
+        }
+      });
     }
 
     return { pct: Math.min(100, Math.round(totalPct)), breakdown: breakdown };
