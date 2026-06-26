@@ -315,7 +315,14 @@ function loadProduction() {
 }
 
 function rebuild() {
-  const projects = window._projects || [];
+  var projects = window._projects || [];
+  // Sales staff only see their assigned projects
+  if (window._currentRole === 'sales') {
+    projects = projects.filter(function(p) {
+      return p.assignee === window._currentUserName ||
+             p.assigneeUid === window._currentUserUID;
+    });
+  }
   allData = projects
     .map(function(p) { return {project:p, items:itemsCache[p.id]||[]}; })
     .filter(function(d) { return d.items.length > 0; });

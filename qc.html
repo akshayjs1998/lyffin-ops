@@ -662,6 +662,8 @@
     const data = snap.exists() ? snap.data() : {};
     currentRole = data.role || 'sales';
     userData = data;
+    window._currentUserName = data.name || user.email.split('@')[0];
+    window._currentUserUID = user.uid;
     const name = data.name || user.email.split('@')[0];
     document.getElementById('user-name').textContent = name;
     document.getElementById('user-role').textContent = currentRole;
