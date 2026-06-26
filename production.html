@@ -304,12 +304,12 @@ function loadProduction() {
         (function(pid) {
           onSnapshot(collection(db, 'projects', pid, 'items'), function(iSnap) {
             itemsCache[pid] = iSnap.docs.map(function(d) { return Object.assign({id:d.id}, d.data()); });
-            rebuild();
+            if (window._currentRole) rebuild(); // only rebuild after role is known
           });
         })(proj.id);
       }
     }
-    rebuild();
+    if (window._currentRole) rebuild();
     document.getElementById('page-loading').style.display = 'none';
   });
 }
