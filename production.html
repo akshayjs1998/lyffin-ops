@@ -277,25 +277,30 @@ onAuthStateChanged(auth, async function(user) {
   const snap = await getDoc(doc(db, 'users', user.uid));
   const data = snap.exists() ? snap.data() : {};
   const name = data.name || user.email.split('@')[0];
+  const role = data.role || 'floor';
+  const uid = user.uid;
+
   document.getElementById('user-name').textContent = name;
-  document.getElementById('user-role').textContent = data.role || 'floor';
+  document.getElementById('user-role').textContent = role;
   document.getElementById('user-avatar').textContent = name.substring(0,2).toUpperCase();
-  if (data.role === 'admin') {
+  if (role === 'admin') {
     document.getElementById('nav-admin-section').style.display = 'block';
     document.getElementById('nav-admin').style.display = 'flex';
     const bnA = document.getElementById('bn-admin');
     if (bnA) bnA.style.display = 'flex';
-    const bnAdminEl = document.getElementById('bn-admin');
-    if (bnAdminEl) bnAdminEl.style.display = 'flex';
-    const bnAdmin = document.getElementById('bn-admin');
-    if (bnAdmin) bnAdmin.style.display = 'flex';
   }
-  loadProduction();
+  loadProduction(role, name, uid);
 });
 
-function loadProduction() {
+function loadProduction(role, userName, uid) {
   onSnapshot(query(collection(db, 'projects')), function(snap) {
-    const projects = snap.docs.map(function(d) { return Object.assign({id:d.id}, d.data()); });
+    let projects = snap.docs.map(function(d) { return Object.assign({id:d.id}, d.data()); });
+    // Filter for sales immediately at data load
+    if (role === 'sales') {
+      projects = projects.filter(function(p) {
+        return p.assignee === userName || p.assigneeUid === uid;
+      });
+    }
     window._projects = projects;
     for (let i = 0; i < projects.length; i++) {
       const proj = projects[i];
@@ -304,25 +309,18 @@ function loadProduction() {
         (function(pid) {
           onSnapshot(collection(db, 'projects', pid, 'items'), function(iSnap) {
             itemsCache[pid] = iSnap.docs.map(function(d) { return Object.assign({id:d.id}, d.data()); });
-            if (window._currentRole) rebuild(); // only rebuild after role is known
+            rebuild();
           });
         })(proj.id);
       }
     }
-    if (window._currentRole) rebuild();
+    rebuild();
     document.getElementById('page-loading').style.display = 'none';
   });
 }
 
 function rebuild() {
-  var projects = window._projects || [];
-  // Sales staff only see their assigned projects
-  if (window._currentRole === 'sales') {
-    projects = projects.filter(function(p) {
-      return p.assignee === window._currentUserName ||
-             p.assigneeUid === window._currentUserUID;
-    });
-  }
+  const projects = window._projects || [];
   allData = projects
     .map(function(p) { return {project:p, items:itemsCache[p.id]||[]}; })
     .filter(function(d) { return d.items.length > 0; });
