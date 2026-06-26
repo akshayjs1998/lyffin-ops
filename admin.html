@@ -680,6 +680,48 @@
   }
 
   // ── GANTT STYLE PROGRESS ──────────────────────────────────────────────────────
+  function calcProjectProgress(items) {
+    // Fixed weights: Structure 30%, Polish 30%, Upholstery 30%, Packing 10%
+    // Packing weight is FIXED — never redistributed
+    // If Structure/Polish/Upholstery are N/A, their weight redistributes among the other non-packing stages
+    const STAGES = ['carpentry','polish','upholstery','packing'];
+    const WEIGHTS = {carpentry:30, polish:30, upholstery:30, packing:10};
+
+    if (!items.length) return { pct: 0, breakdown: [] };
+
+    var totalPct = 0;
+    var breakdown = [];
+    var naWeightPool = 0; // only from non-packing stages
+
+    STAGES.forEach(function(stage) {
+      var weight = WEIGHTS[stage];
+      var validItems = items.filter(function(i) { return i[stage+'Status'] !== 'na'; });
+      if (validItems.length === 0 && stage !== 'packing') {
+        // N/A — pool weight for redistribution (but NOT packing)
+        breakdown.push({stage:stage, done:0, total:0, pct:0, na:true, weight:weight});
+        naWeightPool += weight;
+        return;
+      }
+      var doneItems = validItems.filter(function(i) { return i[stage+'Status'] === 'done'; });
+      var stagePct = validItems.length > 0 ? (doneItems.length / validItems.length) * weight : 0;
+      totalPct += stagePct;
+      breakdown.push({stage:stage, done:doneItems.length, total:validItems.length, pct:stagePct, na:false, weight:weight});
+    });
+
+    // Redistribute only among non-packing valid stages
+    if (naWeightPool > 0) {
+      var validNonPacking = breakdown.filter(function(b) { return !b.na && b.stage !== 'packing'; });
+      var totalValidWeight = validNonPacking.reduce(function(s,b){return s+b.weight;}, 0);
+      if (totalValidWeight > 0) {
+        validNonPacking.forEach(function(b) {
+          var extra = (b.weight / totalValidWeight) * naWeightPool;
+          totalPct += (b.done / b.total) * extra;
+        });
+      }
+    }
+
+    return { pct: Math.min(100, Math.round(totalPct)), breakdown: breakdown };
+  }
   function renderGantt(projects) {
     const STAGES = ['Not Started','Structure','Polish','Upholstery','Packing','Delivered','Completed'];
     const COLORS = {'Not Started':'#e5e7eb','Structure':'#d97706','Polish':'#3b82f6','Upholstery':'#0ea5e9','Packing':'#10b981','Delivered':'#16a34a','Completed':'#6b7280'};

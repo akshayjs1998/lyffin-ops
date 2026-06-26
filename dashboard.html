@@ -1192,38 +1192,43 @@
 
   // ── SIGN OUT ──────────────────────────────────────────────────────────────
   function calcProjectProgress(items) {
-    // Each stage = 25% weightage
-    // carpentry=25%, polish=25%, upholstery=25%, packing=25%
+    // Fixed weights: Structure 30%, Polish 30%, Upholstery 30%, Packing 10%
+    // Packing weight is FIXED — never redistributed
+    // If Structure/Polish/Upholstery are N/A, their weight redistributes among the other non-packing stages
     const STAGES = ['carpentry','polish','upholstery','packing'];
-    const WEIGHT = 25; // each stage worth 25%
+    const WEIGHTS = {carpentry:30, polish:30, upholstery:30, packing:10};
 
     if (!items.length) return { pct: 0, breakdown: [] };
 
-    let totalPct = 0;
-    const breakdown = [];
+    var totalPct = 0;
+    var breakdown = [];
+    var naWeightPool = 0; // only from non-packing stages
 
     STAGES.forEach(function(stage) {
-      const validItems = items.filter(function(i) { return i[stage+'Status'] !== 'na'; });
-      if (validItems.length === 0) {
-        // All items N/A for this stage — skip, redistribute weight
-        breakdown.push({ stage: stage, done: 0, total: 0, pct: 0, na: true });
+      var weight = WEIGHTS[stage];
+      var validItems = items.filter(function(i) { return i[stage+'Status'] !== 'na'; });
+      if (validItems.length === 0 && stage !== 'packing') {
+        // N/A — pool weight for redistribution (but NOT packing)
+        breakdown.push({stage:stage, done:0, total:0, pct:0, na:true, weight:weight});
+        naWeightPool += weight;
         return;
       }
-      const doneItems = validItems.filter(function(i) { return i[stage+'Status'] === 'done'; });
-      const stagePct = (doneItems.length / validItems.length) * WEIGHT;
+      var doneItems = validItems.filter(function(i) { return i[stage+'Status'] === 'done'; });
+      var stagePct = validItems.length > 0 ? (doneItems.length / validItems.length) * weight : 0;
       totalPct += stagePct;
-      breakdown.push({ stage: stage, done: doneItems.length, total: validItems.length, pct: stagePct, na: false });
+      breakdown.push({stage:stage, done:doneItems.length, total:validItems.length, pct:stagePct, na:false, weight:weight});
     });
 
-    // If some stages were N/A, redistribute their weight equally among valid stages
-    const naCount = breakdown.filter(function(b) { return b.na; }).length;
-    if (naCount > 0) {
-      const validStages = breakdown.filter(function(b) { return !b.na; });
-      const extraWeight = (naCount * WEIGHT) / validStages.length;
-      validStages.forEach(function(b) {
-        const stagePct = (b.done / b.total) * (WEIGHT + extraWeight);
-        totalPct += stagePct - (b.done / b.total) * WEIGHT; // adjust
-      });
+    // Redistribute only among non-packing valid stages
+    if (naWeightPool > 0) {
+      var validNonPacking = breakdown.filter(function(b) { return !b.na && b.stage !== 'packing'; });
+      var totalValidWeight = validNonPacking.reduce(function(s,b){return s+b.weight;}, 0);
+      if (totalValidWeight > 0) {
+        validNonPacking.forEach(function(b) {
+          var extra = (b.weight / totalValidWeight) * naWeightPool;
+          totalPct += (b.done / b.total) * extra;
+        });
+      }
     }
 
     return { pct: Math.min(100, Math.round(totalPct)), breakdown: breakdown };
