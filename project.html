@@ -905,11 +905,7 @@ ${(function(){
       'Delivery vehicle / logistics confirmed'
     ];
     const allChecked = checks.every(function(c) {
-      return confirm('Delivery checklist — confirm:
-
-✓ ' + c + '
-
-Click OK to confirm this item.');
+      return confirm('Delivery checklist — confirm:\n\n\u2713 ' + c + '\n\nClick OK to confirm this item.');
     });
     if (!allChecked) { showToast('Delivery checklist incomplete — delivery not confirmed'); return; }
     try {
