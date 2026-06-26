@@ -528,13 +528,21 @@
 
   async function loadEditAssignees() {
     const sel = document.getElementById('e-assignee');
-    if (!sel || sel.children.length > 1) return;
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Loading...</option>';
     try {
       const snap = await getDocs(collection(db, 'users'));
-      const users = snap.docs.map(d => d.data()).filter(u => !u.pending);
-      sel.innerHTML = '<option value="">Select...</option>' +
+      const users = snap.docs.map(d => d.data()).filter(u => !u.pending && u.name);
+      if (!users.length) {
+        sel.innerHTML = '<option value="">No team members found</option>';
+        return;
+      }
+      sel.innerHTML = '<option value="">Select assignee...</option>' +
         users.map(u => '<option ' + (project.assignee === (u.name||u.email) ? 'selected' : '') + '>' + (u.name||u.email) + '</option>').join('');
-    } catch(e) { console.error(e); }
+    } catch(e) {
+      console.error('loadEditAssignees error:', e);
+      sel.innerHTML = '<option value="">Error loading</option>';
+    }
   }
 
   window.switchTab = function(tab, el) {
