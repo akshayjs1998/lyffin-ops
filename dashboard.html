@@ -861,12 +861,13 @@
             <th class="col-location">Location</th>
             <th>Assignee</th>
             <th>Status</th>
+            <th>Items</th>
             <th class="col-handover">Handover</th>
             <th class="col-fabric">Fabric</th>
           </tr>
         </thead>
         <tbody id="projects-tbody">
-          <tr><td colspan="7"><div class="empty-state"><p>Loading projects…</p></div></td></tr>
+          <tr><td colspan="8"><div class="empty-state"><p>Loading projects…</p></div></td></tr>
         </tbody>
       </table>
     </div>
@@ -1076,7 +1077,7 @@
   function renderTable(projects) {
     const tbody = document.getElementById('projects-tbody');
     if (!projects.length) {
-      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
         <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.2">
           <rect x="4" y="4" width="32" height="32" rx="4"/>
           <line x1="12" y1="14" x2="28" y2="14"/>
