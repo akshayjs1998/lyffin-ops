@@ -1101,8 +1101,8 @@
         <td><div class="td-assignee"><div class="assignee-dot">${initials}</div>${p.assignee || '—'}</div></td>
         <td><span class="status-badge ${statusClass}">${p.status || 'Not started'}</span></td>
         <td style="font-size:13px;color:var(--ink-3)">${p.itemCount ? p.itemCount + ' items' : '—'}</td>
-        <td class="td-date col-handover">${handover}</td>
         <td class="td-fabric ${fabricClass}">${p.fabricStatus || 'Not selected'}</td>
+        <td class="td-date col-handover">${handover}</td>
       </tr>`;
     }).join('');
   }
