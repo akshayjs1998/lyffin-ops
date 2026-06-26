@@ -289,6 +289,7 @@ onAuthStateChanged(auth, async function(user) {
     const bnA = document.getElementById('bn-admin');
     if (bnA) bnA.style.display = 'flex';
   }
+  console.log('Auth done, role:', role, 'name:', name);
   loadProduction(role, name, uid);
 });
 
@@ -314,6 +315,7 @@ function loadProduction(role, userName, uid) {
         })(proj.id);
       }
     }
+    console.log('Projects loaded:', projects.length);
     rebuild();
     document.getElementById('page-loading').style.display = 'none';
   });
