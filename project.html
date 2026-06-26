@@ -896,7 +896,6 @@ ${(function(){
     const notes        = document.getElementById('d-notes').value.trim();
     const status       = document.getElementById('d-status').value;
     if (!deliveryDate) { showToast('Please enter delivery date'); return; }
-    // QC / delivery checklist gate
     const checks = [
       'All items have been QC-checked and cleared',
       'Factory listing documents ready',
@@ -904,10 +903,11 @@ ${(function(){
       'All items are packed and labelled',
       'Delivery vehicle / logistics confirmed'
     ];
-    const allChecked = checks.every(function(c) {
-      return confirm('Delivery checklist — confirm:\n\n\u2713 ' + c + '\n\nClick OK to confirm this item.');
-    });
-    if (!allChecked) { showToast('Delivery checklist incomplete — delivery not confirmed'); return; }
+    for (let i = 0; i < checks.length; i++) {
+      if (!confirm(checks[i] + '\n\nConfirm this before delivery?')) {
+        showToast('Delivery checklist incomplete'); return;
+      }
+    }
     try {
       await updateDoc(doc(db, 'projects', projectId), {
         status,
@@ -917,8 +917,8 @@ ${(function(){
         deliveryNotes:   notes,
         updatedAt:       serverTimestamp(),
       });
-      Object.assign(project, { status, deliveredDate: deliveryDate, deliveredBy, deliveryNotes: notes });
       await logProjectActivity(deliveredBy + ' marked project as ' + status + ' on ' + deliveryDate + (notes ? ' · Notes: ' + notes : ''));
+      Object.assign(project, { status, deliveredDate: deliveryDate, deliveredBy, deliveryNotes: notes });
       closeModal('modal-delivery');
       showToast('Project marked as ' + status);
       renderContent();
