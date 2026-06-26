@@ -361,7 +361,7 @@
   import { getAuth, onAuthStateChanged, signOut as fbSignOut } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js';
   import {
     getFirestore, doc, getDoc, updateDoc, deleteDoc, collection,
-    getDocs, query, where, serverTimestamp, orderBy
+    getDocs, addDoc, query, where, serverTimestamp, orderBy
   } from 'https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -449,6 +449,7 @@
     } catch(e) {
       console.error(e);
       showToast('Error loading project');
+      document.getElementById('page-loading').style.display = 'none';
     }
   }
 
@@ -753,12 +754,11 @@ ${(function(){
         const userName = document.getElementById('user-name').textContent;
         await logProjectActivity('Handover date changed from ' + (oldHandover || 'none') + ' to ' + updates.handoverDate + ' by ' + userName);
         // Store in dateHistory subcollection
-        const { addDoc, collection: col2, serverTimestamp: st2 } = await import('https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js');
-        await addDoc(col2(db, 'projects', projectId, 'dateHistory'), {
+        await addDoc(collection(db, 'projects', projectId, 'dateHistory'), {
           oldDate: oldHandover,
           newDate: updates.handoverDate,
           changedBy: userName,
-          changedAt: st2()
+          changedAt: serverTimestamp()
         });
       }
       // Log general edit activity
@@ -973,12 +973,11 @@ Click OK to confirm this item.');
   // ── ACTIVITY LOG ──────────────────────────────────────────────────────────
   async function logProjectActivity(message) {
     try {
-      const { addDoc, collection: col3, serverTimestamp: st3 } = await import('https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js');
-      await addDoc(col3(db, 'projects', projectId, 'activity'), {
+      await addDoc(collection(db, 'projects', projectId, 'activity'), {
         message,
         by: document.getElementById('user-name').textContent,
         uid: currentUser ? currentUser.uid : '',
-        at: st3()
+        at: serverTimestamp()
       });
     } catch(e) { /* non-critical */ }
   }
@@ -987,8 +986,7 @@ Click OK to confirm this item.');
     const listEl = document.getElementById('activity-list');
     if (!listEl) return;
     try {
-      const { getDocs: gd2, collection: col4, query: q4, orderBy: ob4 } = await import('https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js');
-      const snap = await gd2(q4(col4(db, 'projects', projectId, 'activity'), ob4('at', 'desc')));
+      const snap = await getDocs(query(collection(db, 'projects', projectId, 'activity'), orderBy('at', 'desc')));
       if (snap.empty) {
         listEl.innerHTML = '<div class="empty-small">No activity recorded yet.</div>';
         return;
@@ -1008,8 +1006,7 @@ Click OK to confirm this item.');
       // Also show handover date history
       await (async function() {
         try {
-          const { getDocs: gd3, collection: col5, query: q5, orderBy: ob5 } = await import('https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js');
-          const hSnap = await gd3(q5(col5(db, 'projects', projectId, 'dateHistory'), ob5('changedAt', 'desc')));
+            const hSnap = await getDocs(query(collection(db, 'projects', projectId, 'dateHistory'), orderBy('changedAt', 'desc')));
           if (hSnap.empty) return '';
           return '<div style="padding:14px 20px;border-top:1px solid var(--border);background:var(--surface)">' +
             '<div style="font-size:11px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Handover date changes</div>' +
