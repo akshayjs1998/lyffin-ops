@@ -374,10 +374,23 @@ function renderRow(projectId, item) {
     const stage = validStages[i];
     const status = item[stage + 'Status'] || 'pending';
     const isDone = status === 'done';
+    const isNA = status === 'na';
     const label = LABELS[stage] || stage;
-    const text = isDone ? ('checkmark ' + label) : label;
     const cls = isDone ? ('sp done-' + stage) : 'sp';
-    pills += '<button class="' + cls + '" onclick="tap(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)">' + (isDone ? '&#10003; ' : '') + label + '</button>';
+
+    if (isNA) {
+      // Show N/A as a grey label with undo option
+      pills += '<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:4px 8px;border-radius:12px;background:var(--surface-2);color:var(--ink-3)">' +
+        label + ': N/A' +
+        '<button onclick="undoNA(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)" style="font-size:10px;margin-left:3px;background:none;border:none;cursor:pointer;color:var(--ink-3);padding:0" title="Undo N/A">✕</button>' +
+        '</span>';
+    } else {
+      pills += '<button class="' + cls + '" onclick="tap(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)">' + (isDone ? '&#10003; ' : '') + label + '</button>';
+      // N/A button for pending stages (not ready, not done)
+      if (!isDone && stage !== 'ready') {
+        pills += '<button onclick="markNA(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)" style="font-size:10px;padding:3px 6px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--ink-3);cursor:pointer;margin-left:2px;vertical-align:middle" title="Mark as not applicable">N/A</button>';
+      }
+    }
   }
   const obCls = 'ob-' + (item.overallStatus || 'structure').toLowerCase().replace(/\s/g,'');
   return '<tr>' +
@@ -390,9 +403,31 @@ function renderRow(projectId, item) {
   '</tr>';
 }
 
+window.undoNA = async function(projectId, itemId, stage, btn) {
+  if (btn.disabled) return;
+  btn.disabled = true;
+  try {
+    const itemRef = doc(db, 'projects', projectId, 'items', itemId);
+    const snap = await getDoc(itemRef);
+    if (!snap.exists()) { btn.disabled = false; return; }
+    const item = snap.data();
+    const updates = {};
+    updates[stage + 'Status'] = 'pending';
+    const valid = STAGES.filter(s => s !== stage ? item[s + 'Status'] !== 'na' : true);
+    const sim = Object.assign({}, item, updates);
+    const firstPending = STAGES.filter(s => sim[s + 'Status'] !== 'na')
+      .find(s => (sim[s + 'Status'] || 'pending') === 'pending');
+    updates.overallStatus = firstPending ? LABELS[firstPending] : 'Ready';
+    await updateDoc(itemRef, updates);
+    showToast(LABELS[stage] + ' restored to pending');
+  } catch(e) { showToast('Error: ' + e.message); }
+  finally { btn.disabled = false; }
+};
+
 window.markNA = async function(projectId, itemId, stage, btn) {
   if (btn.disabled) return;
-  if (!confirm('Mark ' + (stage === 'upholstery' ? 'Upholstery' : stage) + ' as N/A for this item?')) return;
+  const stageLabel = LABELS[stage] || stage;
+  if (!confirm('Mark ' + stageLabel + ' as N/A for this item?\n\nThis means this item does not require ' + stageLabel + '.')) return;
   btn.disabled = true;
   try {
     const itemRef = doc(db, 'projects', projectId, 'items', itemId);
