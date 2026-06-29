@@ -41,6 +41,8 @@ body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min
 .sp-done{background:#d1fae5;color:#065f46}
 .sp-done::before{content:'✓ '}
 .sp-pending{background:var(--surface-2);color:var(--ink-3)}
+.sp-inprogress{background:#fff7ed;color:#c2410c;border:1px solid #f97316}
+.sp-inprogress::before{content:'▶ '}
 .sp-na{background:transparent;color:#d1d5db;font-size:11px;border:1px solid var(--border)}
 .timeline-section{padding:20px 24px}
 .timeline-title{font-size:12px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
@@ -150,7 +152,9 @@ function renderProject(project, items) {
     const valid = items.filter(i => i[stage+'Status'] !== 'na');
     if (!valid.length) return { stage, label: LABELS[stage], pct: null, na: true };
     const done = valid.filter(i => i[stage+'Status'] === 'done').length;
-    return { stage, label: LABELS[stage], pct: Math.round(done / valid.length * 100), na: false };
+    const started = valid.filter(i => i[stage+'Status'] === 'started').length;
+    const inProgress = started > 0 && done < valid.length;
+    return { stage, label: LABELS[stage], pct: Math.round(done / valid.length * 100), inProgress, na: false };
   }).filter(s => !s.na);
 
   // Handover notice
@@ -212,8 +216,8 @@ function renderProject(project, items) {
         (stageSummary.length > 0 ?
           '<div class="stage-pills">' +
             stageSummary.map(s =>
-              '<span class="stage-pill ' + (s.pct === 100 ? 'sp-done' : 'sp-pending') + '">' +
-                s.label + ' ' + s.pct + '%' +
+              '<span class="stage-pill ' + (s.pct === 100 ? 'sp-done' : s.inProgress ? 'sp-inprogress' : 'sp-pending') + '">' +
+                s.label + (s.inProgress && s.pct === 0 ? ' Started' : ' ' + s.pct + '%') +
               '</span>'
             ).join('') +
           '</div>'
