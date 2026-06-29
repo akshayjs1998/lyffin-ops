@@ -71,6 +71,10 @@ body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min
 .sp:hover{border-color:var(--ink-3);color:var(--ink-2)}
 .sp:active{transform:scale(0.97)}
 .sp:disabled{cursor:not-allowed;opacity:0.6}
+.sp.started-carpentry,.sp.started-structure{background:#fff7ed;color:#c2410c;border-color:#f97316}
+.sp.started-polish{background:#eff6ff;color:#1d4ed8;border-color:#93c5fd}
+.sp.started-upholstery{background:#f0f9ff;color:#0369a1;border-color:#7dd3fc}
+.sp.started-packing{background:#f0fdf4;color:#15803d;border-color:#86efac}
 .sp.done-carpentry,.sp.done-structure{background:#fef3cd;color:#92400e;border-color:#d97706}
 .sp.done-polish{background:#dbeafe;color:#1e40af;border-color:#3b82f6}
 .sp.done-upholstery{background:#e0f2fe;color:#075985;border-color:#0ea5e9}
@@ -85,6 +89,10 @@ body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min
 .overall-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:500}
 .overall-badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0}
 .ob-structure{background:#fef3cd;color:#92400e}.ob-structure::before{background:#d97706}
+.ob-structure-started{background:#fff7ed;color:#c2410c}.ob-structure-started::before{background:#f97316}
+.ob-polish-started{background:#eff6ff;color:#1d4ed8}.ob-polish-started::before{background:#93c5fd}
+.ob-upholstery-started{background:#f0f9ff;color:#0369a1}.ob-upholstery-started::before{background:#7dd3fc}
+.ob-packing-started{background:#f0fdf4;color:#15803d}.ob-packing-started::before{background:#86efac}
 .ob-polish{background:#dbeafe;color:#1e40af}.ob-polish::before{background:#3b82f6}
 .ob-upholstery{background:#e0f2fe;color:#075985}.ob-upholstery::before{background:#0ea5e9}
 .ob-packing{background:#d1fae5;color:#065f46}.ob-packing::before{background:#10b981}
@@ -380,6 +388,7 @@ function renderRow(projectId, item) {
     const isDone = status === 'done';
     const isNA = status === 'na';
     const isPendingApproval = status === 'pending_approval';
+    const isStarted = status === 'started';
     const label = LABELS[stage] || stage;
 
     if (isNA) {
@@ -388,22 +397,44 @@ function renderRow(projectId, item) {
         '<button onclick="undoNA(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)" style="font-size:10px;margin-left:3px;background:none;border:none;cursor:pointer;color:var(--ink-3);padding:0" title="Undo N/A">✕</button>' +
         '</span>';
     } else if (isPendingApproval) {
-      // Awaiting supervisor approval
       pills += '<span class="awaiting-approval">⏳ ' + label + ': awaiting approval</span>';
-      // Supervisor/admin see an Approve button
       if (['admin','supervisor'].includes(currentRole)) {
         pills += '<button class="sp-approve" onclick="approveStage(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)">✓ Approve</button>';
       }
+    } else if (isStarted) {
+      // In progress — show coloured pill, tap to mark done
+      const cls = 'sp started-' + stage;
+      pills += '<button class="' + cls + '" onclick="tap(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)">▶ ' + label + '</button>';
     } else {
       const cls = isDone ? ('sp done-' + stage) : 'sp';
       pills += '<button class="' + cls + '" onclick="tap(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)">' + (isDone ? '✓ ' : '') + label + '</button>';
       if (!isDone && (stage === 'polish' || stage === 'upholstery')) {
         pills += '<button onclick="markNA(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)" style="font-size:10px;padding:3px 6px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--ink-3);cursor:pointer;margin-left:2px;vertical-align:middle" title="Mark as not applicable">N/A</button>';
       }
+      // Add a "▶ Start" button for the first pending stage that isn't done/na/started
+      if (!isDone) {
+        const prevStages = STAGES.slice(0, i);
+        const allPrevDoneOrNA = prevStages.every(function(ps) {
+          const ps_status = item[ps + 'Status'] || 'pending';
+          return ps_status === 'done' || ps_status === 'na';
+        });
+        if (allPrevDoneOrNA) {
+          // This is the current active stage — show Start button if not started
+          pills += '<button onclick="startStage(\'' + projectId + '\',\'' + item.id + '\',\'' + stage + '\',this)" style="font-size:10px;padding:3px 8px;border-radius:8px;border:1px solid #f97316;background:#fff7ed;color:#c2410c;cursor:pointer;margin-left:2px;vertical-align:middle" title="Mark as started">▶ Start</button>';
+        }
+      }
     }
   }
 
-  const obCls = 'ob-' + (item.overallStatus || 'structure').toLowerCase().replace(/\s/g,'');
+  // Compute overall badge class — handle 'X (In Progress)' states
+  let _ovs = item.overallStatus || 'Structure';
+  let obCls;
+  if (_ovs.includes('(In Progress)')) {
+    const base = _ovs.replace(' (In Progress)','').toLowerCase();
+    obCls = 'ob-' + base + '-started';
+  } else {
+    obCls = 'ob-' + _ovs.toLowerCase().replace(/\s/g,'');
+  }
 
   // Audit trail: who last touched this item
   let auditHtml = '';
@@ -425,7 +456,7 @@ function renderRow(projectId, item) {
       auditHtml +
     '</td>' +
     '<td><div class="stages">' + pills + '</div></td>' +
-    '<td><span class="overall-badge ' + obCls + '">' + (item.overallStatus||'Structure') + '</span></td>' +
+    '<td><span class="overall-badge ' + obCls + '">' + (item.overallStatus||'Structure').replace(' (In Progress)',' ▶') + '</span></td>' +
     '<td>' + remarkHtml + '</td>' +
   '</tr>';
 }
@@ -442,15 +473,27 @@ window.tap = async function(projectId, itemId, stage, btn) {
     const item = snap.data();
     const current = item[stage + 'Status'] || 'pending';
 
-    // Floor staff: marking done sends to pending_approval for supervisor gate
-    // Supervisors/admin: tap directly to done
+    // Tap cycles: pending → started (floor) / pending → done (supervisor+)
+    //             started → pending_approval (floor) / started → done (supervisor+)
+    //             pending_approval → pending (undo, any)
+    //             done → pending (undo, any)
     let next;
     if (current === 'done') {
-      next = 'pending'; // undo is always direct
-    } else if (['floor'].includes(currentRole) && stage !== 'ready') {
-      next = 'pending_approval';
+      next = 'pending'; // undo
+    } else if (current === 'started') {
+      // Already started — mark complete
+      if (['floor'].includes(currentRole) && stage !== 'ready') {
+        next = 'pending_approval';
+      } else {
+        next = 'done';
+      }
     } else {
-      next = 'done';
+      // pending or pending_approval — first tap starts it, second tap completes
+      if (['floor'].includes(currentRole) && stage !== 'ready') {
+        next = 'pending_approval';
+      } else {
+        next = 'done';
+      }
     }
 
     const updates = {};
@@ -469,7 +512,14 @@ window.tap = async function(projectId, itemId, stage, btn) {
       const st = sim[s + 'Status'] || 'pending';
       return st === 'pending' || st === 'pending_approval';
     });
-    updates.overallStatus = firstPending ? LABELS[firstPending] : 'Ready';
+    const firstStarted = !firstPending && valid.find(function(s) {
+      return (sim[s + 'Status'] || 'pending') === 'started';
+    });
+    if (firstStarted) {
+      updates.overallStatus = LABELS[firstStarted] + ' (In Progress)';
+    } else {
+      updates.overallStatus = firstPending ? LABELS[firstPending] : 'Ready';
+    }
     if (updates.overallStatus === 'Ready') updates[stage + 'Status'] = 'done'; // if all done, commit directly
 
     await updateDoc(itemRef, updates);
@@ -507,6 +557,27 @@ window.tap = async function(projectId, itemId, stage, btn) {
   }
 };
 
+window.startStage = async function(projectId, itemId, stage, btn) {
+  if (btn.disabled) return;
+  btn.disabled = true;
+  try {
+    const itemRef = doc(db, 'projects', projectId, 'items', itemId);
+    const snap = await getDoc(itemRef);
+    if (!snap.exists()) { btn.disabled = false; return; }
+    const item = snap.data();
+    const updates = {};
+    updates[stage + 'Status'] = 'started';
+    updates.lastMarkedBy = currentUserName;
+    updates.lastMarkedAt = serverTimestamp();
+    // Overall status: label + ' (In Progress)'
+    updates.overallStatus = LABELS[stage] + ' (In Progress)';
+    await updateDoc(itemRef, updates);
+    await logActivity(projectId, currentUserName + ' started ' + LABELS[stage] + ' on ' + (item.name||'item'));
+    showToast(LABELS[stage] + ' started');
+  } catch(e) { showToast('Error: ' + e.message); }
+  finally { btn.disabled = false; }
+};
+
 window.approveStage = async function(projectId, itemId, stage, btn) {
   if (btn.disabled) return;
   btn.disabled = true;
@@ -523,11 +594,9 @@ window.approveStage = async function(projectId, itemId, stage, btn) {
 
     const valid = STAGES.filter(s => item[s + 'Status'] !== 'na');
     const sim = Object.assign({}, item, updates);
-    const firstPending = valid.find(s => {
-      const st = sim[s + 'Status'] || 'pending';
-      return st === 'pending' || st === 'pending_approval';
-    });
-    updates.overallStatus = firstPending ? LABELS[firstPending] : 'Ready';
+    const firstPending = valid.find(s => { const st = sim[s + 'Status'] || 'pending'; return st === 'pending' || st === 'pending_approval'; });
+    const firstStarted2 = !firstPending && valid.find(s => (sim[s + 'Status'] || 'pending') === 'started');
+    updates.overallStatus = firstStarted2 ? LABELS[firstStarted2] + ' (In Progress)' : (firstPending ? LABELS[firstPending] : 'Ready');
     await updateDoc(itemRef, updates);
     await logActivity(projectId, currentUserName + ' approved ' + LABELS[stage] + ' for ' + (item.name||'item'));
     showToast(LABELS[stage] + ' approved');
@@ -549,8 +618,9 @@ window.undoNA = async function(projectId, itemId, stage, btn) {
     updates.lastMarkedAt = serverTimestamp();
     const sim = Object.assign({}, item, updates);
     const valid = STAGES.filter(s => sim[s + 'Status'] !== 'na');
-    const firstPending = valid.find(s => (sim[s + 'Status'] || 'pending') === 'pending');
-    updates.overallStatus = firstPending ? LABELS[firstPending] : 'Ready';
+    const firstPending = valid.find(s => { const st = sim[s + 'Status'] || 'pending'; return st === 'pending' || st === 'pending_approval'; });
+    const firstStarted3 = !firstPending && valid.find(s => (sim[s + 'Status'] || 'pending') === 'started');
+    updates.overallStatus = firstStarted3 ? LABELS[firstStarted3] + ' (In Progress)' : (firstPending ? LABELS[firstPending] : 'Ready');
     await updateDoc(itemRef, updates);
     showToast(LABELS[stage] + ' restored to pending');
   } catch(e) { showToast('Error: ' + e.message); }

@@ -641,7 +641,10 @@
             <th>Status</th>
           </tr></thead>
           <tbody>${items.map((item, i) => {
-            const statusClass = 'badge-' + (item.overallStatus || 'structure').toLowerCase().replace(/\s+/g,'-');
+            const _ovs2 = item.overallStatus || 'Structure';
+            const statusClass = _ovs2.includes('(In Progress)')
+              ? 'badge-' + _ovs2.replace(' (In Progress)','').toLowerCase() + '-inprogress'
+              : 'badge-' + _ovs2.toLowerCase().replace(/\s+/g,'-');
             return `<tr>
               <td style="color:var(--ink-3);font-size:12px">${i+1}</td>
               <td><strong>${esc(item.name||'—')}</strong></td>
@@ -657,7 +660,7 @@ ${(function(){
                   return '<td><span class="stage-pill sp-pending">'+lbl+'</span></td>';
                 }).join('');
               })()}
-              <td><span class="badge ${statusClass}" style="font-size:11px">${item.overallStatus||'Structure'}</span></td>
+              <td><span class="badge ${statusClass}" style="font-size:11px">${(item.overallStatus||'Structure').replace(' (In Progress)',' ▶')}</span></td>
             </tr>`;
           }).join('')}</tbody>
         </table>
