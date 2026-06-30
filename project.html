@@ -650,7 +650,7 @@
               <td><strong>${esc(item.name||'—')}</strong></td>
               <td>${item.qty||1}</td>
               <td style="font-size:12px;color:var(--ink-3)">${esc(item.area||'—')}</td>
-              <td style="font-size:12px;color:var(--ink-3)">${esc(item.dimensions||'—')}</td>
+              <td style="font-size:12px;color:var(--ink-3)">${esc(item.dimensions||'—')}${item.details?`<br/><span style="font-style:italic;font-size:11px">${esc(item.details)}</span>`:""}${(item.finishes&&item.finishes.filter(Boolean).length)?`<br/><span style="font-size:11px">Finish: ${item.finishes.filter(Boolean).map(esc).join(', ')}</span>`:""}${(item.upholstery&&item.upholstery.filter(Boolean).length)?`<br/><span style="font-size:11px">Upholstery: ${item.upholstery.filter(Boolean).map(esc).join(', ')}</span>`:""}</td>
 ${(function(){
                 return STAGES.map(function(s){
                   const st = item[s+'Status'];
@@ -842,7 +842,9 @@ ${(function(){
       const isReady = item.overallStatus === 'Ready';
       return '<tr style="background:' + (isReady ? '#f0fdf4' : 'transparent') + '">' +
         '<td style="padding:10px 16px;font-weight:500">' + esc(item.name||'—') + '</td>' +
-        '<td style="padding:10px 16px;font-size:12px;color:var(--ink-3)">Qty: ' + (item.qty||1) + (item.area ? ' · ' + esc(item.area) : '') + '</td>' +
+        '<td style="padding:10px 16px;font-size:12px;color:var(--ink-3)">Qty: ' + (item.qty||1) + (item.area ? ' · ' + esc(item.area) : '') + (item.details ? '<br><span style="font-style:italic">' + esc(item.details) + '</span>' : '') +
+        ((item.finishes && item.finishes.filter(Boolean).length) ? '<br>Finish: ' + item.finishes.filter(Boolean).map(esc).join(', ') : '') +
+        ((item.upholstery && item.upholstery.filter(Boolean).length) ? '<br>Upholstery: ' + item.upholstery.filter(Boolean).map(esc).join(', ') : '') + '</td>' +
         '<td style="padding:10px 16px"><div style="display:flex;gap:4px;flex-wrap:wrap">' + stagePills + '</div></td>' +
         '<td style="padding:10px 16px;text-align:center">' + (isReady ? '<span style="color:#16a34a;font-weight:500;font-size:13px">&#10003; Ready</span>' : '<span style="color:var(--ink-3);font-size:12px">In progress</span>') + '</td>' +
       '</tr>';
