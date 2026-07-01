@@ -422,7 +422,7 @@
       if (!projSnap.exists()) { window.location.href = 'dashboard.html'; return; }
 
       project = { id: projSnap.id, ...projSnap.data() };
-      items = itemsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      items = itemsSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => { const na=parseInt(a.productNo)||0, nb=parseInt(b.productNo)||0; return na!==nb ? na-nb : (a.name||'').localeCompare(b.name||''); });
       complaints = complSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
       // Sales staff: only see their assigned projects
@@ -935,7 +935,7 @@ ${(function(){
     if (!confirm('Delete ' + (project.projectName||'this project') + '? This will permanently delete the project and all its production items. This cannot be undone.')) return;
     try {
       // Delete all items in subcollection first
-      const itemsSnap = await getDocs(collection(db, 'projects', projectId, 'items'));
+      const itemsSnap = await getDocs(collection(db, 'projects', projectId, 'items')); itemsSnap.docs.sort((a,b)=>{ const na=parseInt(a.data().productNo)||0,nb=parseInt(b.data().productNo)||0; return na!==nb?na-nb:(a.data().name||'').localeCompare(b.data().name||''); });
       const batch = [];
       itemsSnap.docs.forEach(d => {
         batch.push(deleteDoc(doc(db, 'projects', projectId, 'items', d.id)));
