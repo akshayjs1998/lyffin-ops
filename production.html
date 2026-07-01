@@ -80,6 +80,8 @@ body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min
 .sp.done-upholstery{background:#e0f2fe;color:#075985;border-color:#0ea5e9}
 .sp.done-packing{background:#d1fae5;color:#065f46;border-color:#10b981}
 .sp.done-ready{background:#dcfce7;color:#14532d;border-color:#22c55e}
+.badge-on-hold{background:#f3f4f6;color:#6b7280}.badge-on-hold::before{background:#9ca3af}
+.ob-on-hold{background:#f3f4f6;color:#6b7280}.ob-on-hold::before{background:#9ca3af}
 /* Supervisor approve button */
 .sp-approve{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:500;font-family:var(--font-sans);cursor:pointer;border:1.5px solid #16a34a;background:#f0fdf4;color:#16a34a;transition:all .15s;white-space:nowrap}
 .sp-approve:hover{background:#dcfce7}
@@ -195,9 +197,11 @@ body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min
           <option value="Upholstery">Upholstery</option>
           <option value="Packing">Packing</option>
           <option value="Delivered">Delivered</option>
+          <option value="On Hold">On Hold</option>
         </select>
         <button class="btn btn-ghost" onclick="bulkUpdateStatus()" style="height:36px">Apply</button>
       </div>
+      <input type="text" id="prod-search" class="filter-select" placeholder="Search project…" oninput="filterProjects()" style="width:160px">
       <select class="filter-select" id="filter-status" onchange="filterProjects()">
         <option value="">All active projects</option>
         <option value="Structure">Structure</option>
@@ -205,6 +209,7 @@ body{font-family:var(--font-sans);background:var(--surface);color:var(--ink);min
         <option value="Upholstery">Upholstery</option>
         <option value="Packing">Packing</option>
         <option value="Ready">Ready</option>
+        <option value="On Hold">On Hold</option>
       </select>
     </div>
   </div>
@@ -338,7 +343,14 @@ function rebuild() {
 function render() {
   const grid = document.getElementById('projects-grid');
   const filter = document.getElementById('filter-status').value;
-  const data = filter ? allData.filter(function(d) { return d.project.status === filter; }) : allData;
+  const searchEl = document.getElementById('prod-search');
+  const search = searchEl ? searchEl.value.toLowerCase() : '';
+  let data = filter ? allData.filter(function(d) { return d.project.status === filter; }) : allData;
+  if (search) data = data.filter(function(d) {
+    return (d.project.projectName||'').toLowerCase().includes(search) ||
+           (d.project.location||'').toLowerCase().includes(search) ||
+           (d.project.orderNo||'').toLowerCase().includes(search);
+  });
   if (!data.length) {
     grid.innerHTML = '<div class="empty-state">No production projects found. Push a factory listing to get started.</div>';
     return;

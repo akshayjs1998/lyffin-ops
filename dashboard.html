@@ -441,6 +441,8 @@
 
   .s-completed { background: #f0fdf4; color: #166534; }
   .s-completed::before { background: #16a34a; }
+  .s-on-hold { background: #f3f4f6; color: #6b7280; }
+  .s-on-hold::before { background: #9ca3af; }
 
   .td-date {
     color: var(--ink-2);
@@ -849,6 +851,7 @@
         <option value="Packing">Packing</option>
         <option value="Delivered">Delivered</option>
         <option value="Completed">Completed</option>
+        <option value="On Hold">On Hold</option>
         <option value="Complaints">Complaints</option>
       </select>
       <select class="filter-select" id="filter-assignee" onchange="filterProjects()">
@@ -1066,7 +1069,7 @@
     const today = new Date(); today.setHours(0,0,0,0);
     document.getElementById('stat-overdue').textContent =
       allProjects.filter(p => {
-        if (['Delivered','Completed'].includes(p.status)) return false;
+        if (['Delivered','Completed','On Hold'].includes(p.status)) return false;
         if (!p.handoverDate) return false;
         return new Date(p.handoverDate) < today;
       }).length;

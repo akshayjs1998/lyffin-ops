@@ -94,6 +94,7 @@
   .badge-delivered   { background: #dcfce7; color: #14532d; } .badge-delivered::before { background: #22c55e; }
   .badge-completed   { background: #f0fdf4; color: #166534; } .badge-completed::before { background: #16a34a; }
   .badge-not-started { background: #f3f4f6; color: #6b7280; } .badge-not-started::before { background: #9ca3af; }
+  .badge-on-hold      { background: #f3f4f6; color: #6b7280; } .badge-on-hold::before { background: #9ca3af; }
   .badge-carpentry   { background: #fef3cd; color: #92400e; } .badge-carpentry::before { background: #d97706; }
 
   /* TABS */
@@ -703,7 +704,7 @@ ${(function(){
           <div class="form-field">
             <label>Status</label>
             <select id="e-status">
-              ${['Not Started','Structure','Polish','Upholstery','Packing','Delivered','Completed'].map(s =>
+              ${['Not Started','Structure','Polish','Upholstery','Packing','On Hold','Delivered','Completed'].map(s =>
                 `<option ${project.status===s?'selected':''}>${s}</option>`
               ).join('')}
             </select>
