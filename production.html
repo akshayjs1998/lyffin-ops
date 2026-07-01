@@ -321,7 +321,10 @@ function loadProduction(role, userName, uid) {
         itemsCache[proj.id] = [];
         (function(pid) {
           onSnapshot(collection(db, 'projects', pid, 'items'), function(iSnap) {
-            itemsCache[pid] = iSnap.docs.map(function(d) { return Object.assign({id:d.id}, d.data()); });
+            itemsCache[pid] = iSnap.docs.map(function(d) { return Object.assign({id:d.id}, d.data()); }).sort(function(a,b){
+              const na = parseInt(a.productNo)||0, nb = parseInt(b.productNo)||0;
+              return na !== nb ? na - nb : (a.name||'').localeCompare(b.name||'');
+            });
             rebuild();
           });
         })(proj.id);
